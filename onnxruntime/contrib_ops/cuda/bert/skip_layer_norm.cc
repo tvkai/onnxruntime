@@ -41,6 +41,10 @@ Status SkipLayerNorm<T>::ComputeInternal(OpKernelContext* ctx) const {
 
   Tensor* output = ctx->Output(0, input->Shape());
 
+  if (input->SizeInBytes() == 0) {
+    return Status::OK();
+  }
+
   const auto& input_dims = input->Shape().GetDims();
   if (input_dims.size() != 3) {
     return ORT_MAKE_STATUS(ONNXRUNTIME, INVALID_ARGUMENT,
