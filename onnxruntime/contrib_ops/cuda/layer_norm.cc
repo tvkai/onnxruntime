@@ -72,7 +72,7 @@ Status LayerNorm<T, U, simplified>::ComputeInternal(OpKernelContext* ctx) const 
   Tensor* Y = ctx->Output(0, x_shape);
   auto Y_data = reinterpret_cast<CudaT*>(Y->template MutableData<T>());
 
-  if (input->SizeInBytes() == 0) {
+  if (X->SizeInBytes() == 0) {
     return Status::OK();
   }
 
