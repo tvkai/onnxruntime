@@ -63,9 +63,6 @@ Status LayerNorm<T, U, simplified>::ComputeInternal(OpKernelContext* ctx) const 
   const TensorShape& x_shape = X->Shape();
   // Sometimes due to conversion issue, the input 'X' has no data which is a case that cuda kernel cannot handle.
   // Provide more error infomation here instead of CUDA errors.
-  if (X->SizeInBytes() == 0) {
-    return Status::OK();
-  }
 
   const int64_t axis = HandleNegativeAxis(axis_, x_shape.NumDimensions());
 
@@ -77,6 +74,10 @@ Status LayerNorm<T, U, simplified>::ComputeInternal(OpKernelContext* ctx) const 
   // Outputs
   Tensor* Y = ctx->Output(0, x_shape);
   auto Y_data = reinterpret_cast<CudaT*>(Y->template MutableData<T>());
+
+  if (x_shape.Size() == 0) {
+    return Status::OK();
+  }
 
   //Mean and variance
   std::vector<int64_t> mean_inv_std_var_dim;

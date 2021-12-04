@@ -64,7 +64,7 @@ Status Attention<T>::ComputeInternal(OpKernelContext* context) const {
   int past_sequence_length = 0;
   Tensor* present = GetPresent(context, past, batch_size, head_size, sequence_length, past_sequence_length);
 
-  if (input->SizeInBytes() == 0) {
+  if (shape.Size() == 0) {
     return Status::OK();
   }
 
