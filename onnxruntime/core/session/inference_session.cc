@@ -1403,13 +1403,13 @@ common::Status InferenceSession::Initialize() {
       }
 
       // add a warning if the NchwcTransformer was enabled, as it contains the hardware specific logic
-      if (session_options_.graph_optimization_level >= TransformerLevel::Level3 &&
-          optimizers_to_disable_.find("NchwcTransformer") == optimizers_to_disable_.cend()) {
-        LOGS(*session_logger_, WARNING)
-            << "Serializing optimized model with Graph Optimization level greater than ORT_ENABLE_EXTENDED and the "
-               "NchwcTransformer enabled. The generated model may contain hardware specific optimizations, and "
-               "should only be used in the same environment the model was optimized in.";
-      }
+      // if (session_options_.graph_optimization_level >= TransformerLevel::Level3 &&
+      //     optimizers_to_disable_.find("NchwcTransformer") == optimizers_to_disable_.cend()) {
+      //   LOGS(*session_logger_, WARNING)
+      //       << "Serializing optimized model with Graph Optimization level greater than ORT_ENABLE_EXTENDED and the "
+      //          "NchwcTransformer enabled. The generated model may contain hardware specific optimizations, and "
+      //          "should only be used in the same environment the model was optimized in.";
+      // }
 
       if (saving_ort_format) {
         ORT_RETURN_IF_ERROR_SESSIONID_(SaveToOrtFormat(session_options_.optimized_model_filepath));

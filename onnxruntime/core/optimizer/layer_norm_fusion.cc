@@ -222,12 +222,20 @@ Status LayerNormFusion::ApplyImpl(Graph& graph, bool& modified, int graph_level,
       }
     }
 
-    // div --> mul
-    Node& mul_node = *graph.GetNode(div_node.OutputNodesBegin()->Index());
+    // div --> mul or div --> cast --> mul
+    Node* next_node = graph.GetNode(div_node.OutputNodesBegin()->Index());
+    Node* p_cast_2 = nullptr;
+    if (graph_utils::IsSupportedOptypeVersionAndDomain(*next_node, "Cast", {9, 13}) &&
+        optimizer_utils::CheckOutputEdges(graph, *next_node, 1)) {
+      p_cast_2 = next_node;
+      next_node = graph.GetNode(p_cast_2->OutputNodesBegin()->Index());
+      nodes_to_remove.push_back(*p_cast_2);
+    }
+
+    Node& mul_node = *next_node;
     if (!graph_utils::IsSupportedOptypeVersionAndDomain(mul_node, "Mul", {7, 13, 14}) ||
         mul_node.GetExecutionProviderType() != reduce_mean_node.GetExecutionProviderType() ||
-        !optimizer_utils::CheckOutputEdges(graph, mul_node, 1) ||
-        !IsSupportedDataType(mul_node)) {
+        !optimizer_utils::CheckOutputEdges(graph, mul_node, 1) || !IsSupportedDataType(mul_node)) {
       continue;
     }
     nodes_to_remove.push_back(mul_node);
@@ -322,10 +330,23 @@ Status LayerNormFusion::ApplyImpl(Graph& graph, bool& modified, int graph_level,
     // Assign provider to this new node. Provider should be same as the provider for old node.
     layer_norm_node.SetExecutionProviderType(reduce_mean_node.GetExecutionProviderType());
 
-    // move input edges to add (first in list) across to the layer_norm_node.
-    // move output definitions and output edges from mul_node (last in list) to layer_norm_node.
-    // remove all the other nodes.
-    graph_utils::FinalizeNodeFusion(graph, nodes_to_remove, layer_norm_node);
+    if (p_cast_2) {
+      auto type_info = div_node.MutableOutputDefs()[0]->TypeAsProto();
+      NodeArg* LN_output = &graph.GetOrCreateNodeArg(graph.GenerateNodeArgName("layer_norm_out"), type_info);
+      layer_norm_node.MutableOutputDefs().push_back(LN_output);
+      Node& cast_ln_node =
+          graph.AddNode(graph.GenerateNodeName("Cast"), "Cast", "cast output of layer norm", {LN_output}, {});
+
+      auto cast_2_to_attr = p_cast_2->GetAttributes().find("to")->second.i();
+      cast_ln_node.AddAttribute("to", cast_2_to_attr);
+      cast_ln_node.SetExecutionProviderType(pow_node.GetExecutionProviderType());
+      graph_utils::FinalizeNodeFusion(graph, nodes_to_remove, layer_norm_node, cast_ln_node);
+    } else {
+      // move input edges to add (first in list) across to the layer_norm_node.
+      // move output definitions and output edges from mul_node (last in list) to layer_norm_node.
+      // remove all the other nodes.
+      graph_utils::FinalizeNodeFusion(graph, nodes_to_remove, layer_norm_node);
+    }
 
 #ifdef ENABLE_TRAINING
     // add two extra output defs, so we have 3 output defs that match what gradient builder expected

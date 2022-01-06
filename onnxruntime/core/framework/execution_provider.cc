@@ -141,7 +141,7 @@ void IExecutionProvider::TryInsertAllocator(AllocatorPtr allocator) {
   const OrtMemoryInfo& info = allocator->Info();
   auto ite = mem_info_set_.find(info);
   if (ite != mem_info_set_.end()) {
-    LOGS_DEFAULT(WARNING) << "duplicated allocator: " << info.ToString();
+    // LOGS_DEFAULT(WARNING) << "duplicated allocator: " << info.ToString();
     return;
   }
   InsertAllocator(allocator);
