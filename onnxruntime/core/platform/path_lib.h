@@ -7,6 +7,7 @@
 #include <sstream>
 #include <assert.h>
 #include <stdexcept>
+#include <sys/stat.h>
 #ifdef _WIN32
 #include <Windows.h>
 #include <time.h>  //strftime
@@ -221,6 +222,7 @@ inline std::basic_string<PATH_CHAR_TYPE> GetLastComponent(const std::basic_strin
 }
 
 #else
+/*
 inline OrtFileType DTToFileType(unsigned char t) {
   switch (t) {
     case DT_BLK:
@@ -240,11 +242,31 @@ inline OrtFileType DTToFileType(unsigned char t) {
     default:
       return OrtFileType::TYPE_UNKNOWN;
   }
+}*/
+inline OrtFileType DTToFileTypeAIX(struct stat st) {
+    switch (st.st_mode) {
+	case S_IFBLK:
+		return OrtFileType::TYPE_BLK;
+	case S_IFCHR:
+		return OrtFileType::TYPE_CHR;
+	case S_IFDIR:
+		return OrtFileType::TYPE_DIR;
+	case S_IFIFO:
+		return OrtFileType::TYPE_FIFO;
+	case S_IFLNK:
+		return OrtFileType::TYPE_LNK;
+	case S_IFREG:
+		return OrtFileType::TYPE_REG;
+	/* No Socket type */
+	default:
+		return OrtFileType::TYPE_UNKNOWN;
+	}
 }
 
 template <typename T>
 void LoopDir(const std::string& dir_name, T func) {
   DIR* dir = opendir(dir_name.c_str());
+  struct stat stats; 
   if (dir == nullptr) {
     auto e = errno;
     char buf[1024];
@@ -265,7 +287,10 @@ void LoopDir(const std::string& dir_name, T func) {
   ORT_TRY {
     struct dirent* dp;
     while ((dp = readdir(dir)) != nullptr) {
-      if (!func(dp->d_name, DTToFileType(dp->d_type))) {
+	if (stat(dp->d_name, &stats) != 0) {
+		continue;
+	}	
+      if (!func(dp->d_name, DTToFileTypeAIX(stats))) {
         break;
       }
     }

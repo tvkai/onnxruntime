@@ -41,8 +41,9 @@ with open(args.output, 'w') as file:
     elif args.style == 'xcode':
         pass    # xcode compile don't has any header.
     else:
-        file.write('VERS_%s {\n' % VERSION_STRING)
-        file.write(' global:\n')
+        pass 
+        #file.write('VERS_%s {\n' % VERSION_STRING)
+        #file.write(' global:\n')
 
     for symbol in symbols:
         if args.style == 'vc':
@@ -50,13 +51,14 @@ with open(args.output, 'w') as file:
         elif args.style == 'xcode':
             file.write("_%s\n" % symbol)
         else:
-            file.write("  %s;\n" % symbol)
+            file.write(" %s\n" % symbol) 
         symbol_index += 1
 
     if args.style == 'gcc':
-        file.write(" local:\n")
-        file.write("    *;\n")
-        file.write("};   \n")
+         pass
+#        file.write(" local:\n")
+#        file.write("    *;\n")
+#        file.write("};   \n")
 
 with open(args.output_source, 'w') as file:
     file.write("#include <onnxruntime_c_api.h>\n")

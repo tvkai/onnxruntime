@@ -110,7 +110,8 @@ if(UNIX)
   if (APPLE)
     set(ONNXRUNTIME_SO_LINK_FLAG " -Xlinker -dead_strip")
   else()
-    set(ONNXRUNTIME_SO_LINK_FLAG " -Xlinker --version-script=${SYMBOL_FILE} -Xlinker --no-undefined -Xlinker --gc-sections -z noexecstack")
+    #set(ONNXRUNTIME_SO_LINK_FLAG " -Xlinker --version-script=${SYMBOL_FILE} -Xlinker --no-undefined -Xlinker --gc-sections -z noexecstack")
+    set(ONNXRUNTIME_SO_LINK_FLAG " -Xlinker -bE:${SYMBOL_FILE}")
   endif()
 else()
   set(ONNXRUNTIME_SO_LINK_FLAG " -DEF:${SYMBOL_FILE}")
@@ -130,7 +131,8 @@ if (NOT WIN32)
         set_target_properties(onnxruntime PROPERTIES INSTALL_RPATH "@loader_path")
     endif()
   elseif (NOT onnxruntime_BUILD_WEBASSEMBLY)
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-rpath='$ORIGIN'")
+    # set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-rpath='$ORIGIN'")
+      set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-L${ORIGIN}")
   endif()
 endif()
 
@@ -182,6 +184,7 @@ set(onnxruntime_INTERNAL_LIBRARIES
   ${ONNXRUNTIME_MLAS_LIBS}
   onnxruntime_common
   onnxruntime_flatbuffers
+  iconv
 )
 
 if (onnxruntime_ENABLE_LANGUAGE_INTEROP_OPS)
