@@ -184,8 +184,8 @@
       "component": {
         "type": "git",
         "git": {
-          "commitHash": "6df40a2471737b27271bdd9b900ab5f3aec746c7",
-          "repositoryUrl": "https://github.com/google/flatbuffers.git"
+          "commitHash": "a4549f763f6c6c7e2142ca45448ce65bf3b82b06",
+          "repositoryUrl": "https://github.com/tvkai/flatbuffers.git"
         },
         "comments": "git submodule at cmake/external/flatbuffers"
       }
@@ -204,8 +204,8 @@
       "component": {
         "type": "git",
         "git": {
-          "commitHash": "53495a2a7d6ba7e0691a7f3602e9a5324bba6e45",
-          "repositoryUrl": "https://github.com/google/googletest.git"
+          "commitHash": "8152d4ed71553f7ea5df389a451529a92b50d379",
+          "repositoryUrl": "https://github.com/tvkai/googletest.git"
         },
         "comments": "git submodule at cmake/external/googletest"
       }
@@ -354,7 +354,7 @@
       "component": {
         "type": "git",
         "git": {
-          "commitHash": "2dc747c574b68a808ea4699d26942c8132fe2b09",
+          "commitHash": "4ffb31e90681ca06bfeca92a6068206ab78959ec",
           "repositoryUrl": "https://github.com/protocolbuffers/protobuf.git"
         },
         "comments": "git submodule at cmake/external/protobuf"
