@@ -1,9 +1,11 @@
 [submodule "cmake/external/protobuf"]
 	path = cmake/external/protobuf
-	url = https://github.com/protocolbuffers/protobuf.git
+	url = https://github.com/tvkai/protobuf.git
+	branch = tvkai1branchprotobuf
 [submodule "cmake/external/googletest"]
 	path = cmake/external/googletest
-	url = https://github.com/google/googletest.git
+	url = https://github.com/tvkai/googletest.git
+	branch = tvkai1branchgoogletest
 [submodule "cmake/external/googlebenchmark"]
 	path = cmake/external/googlebenchmark
 	url = https://github.com/google/benchmark.git
@@ -50,13 +52,10 @@
 [submodule "cmake/external/libprotobuf-mutator"]
 	path = cmake/external/libprotobuf-mutator
 	url = https://github.com/google/libprotobuf-mutator.git
-<<<<<<< HEAD
 [submodule "cmake/external/flatbuffers"]
 	path = cmake/external/flatbuffers
 	url = https://github.com/tvkai/flatbuffers.git
 	branch = tvkai1branchflatbuffers
-=======
->>>>>>> 5181c817d323e1549ceb482f2f438da99bff2061
 [submodule "cmake/external/SafeInt/safeint"]
 	path = cmake/external/SafeInt/safeint
 	url = https://github.com/dcleblanc/SafeInt.git
