@@ -50,13 +50,10 @@
 [submodule "cmake/external/libprotobuf-mutator"]
 	path = cmake/external/libprotobuf-mutator
 	url = https://github.com/google/libprotobuf-mutator.git
-<<<<<<< HEAD
 [submodule "cmake/external/flatbuffers"]
 	path = cmake/external/flatbuffers
 	url = https://github.com/tvkai/flatbuffers.git
 	branch = tvkai1branchflatbuffers
-=======
->>>>>>> 5181c817d323e1549ceb482f2f438da99bff2061
 [submodule "cmake/external/SafeInt/safeint"]
 	path = cmake/external/SafeInt/safeint
 	url = https://github.com/dcleblanc/SafeInt.git
