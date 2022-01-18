@@ -23,7 +23,8 @@
 	url = https://github.com/google/nsync.git
 [submodule "cmake/external/re2"]
 	path = cmake/external/re2
-	url = https://github.com/google/re2.git
+	url = https://github.com/tvkai/re2.git
+	branch = tvkai1branchre2
 [submodule "cmake/external/eigen"]
 	path = cmake/external/eigen
 	url = https://gitlab.com/libeigen/eigen.git
