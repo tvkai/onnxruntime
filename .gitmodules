@@ -52,7 +52,8 @@
 	url = https://github.com/google/libprotobuf-mutator.git
 [submodule "cmake/external/flatbuffers"]
 	path = cmake/external/flatbuffers
-	url = https://github.com/google/flatbuffers.git
+	url = https://github.com/tvkai/flatbuffers.git
+	branch = tvkai1branchflatbuffers
 [submodule "cmake/external/SafeInt/safeint"]
 	path = cmake/external/SafeInt/safeint
 	url = https://github.com/dcleblanc/SafeInt.git
