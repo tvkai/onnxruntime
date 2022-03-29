@@ -30,6 +30,24 @@ void TestUnpackFloatTensor(TensorProto_DataType type, const Path& model_path) {
   for (int i = 0; i < 4; ++i) {
     memcpy(rawdata + i * sizeof(T), &(f[i]), sizeof(T));
   }
+  char* bytes = (char*)rawdata;
+  if (1) {
+         std::cout<<"Doing byte swapping in TestUnpackFloatTensor tensorutils_test.cc"<<std::endl;
+         const size_t element_size = sizeof(T);
+         const size_t num_elements = 4;
+         for (size_t i = 0; i < num_elements; ++i) {
+             char* start_byte = bytes + i * element_size;
+             char* end_byte = start_byte + element_size - 1;
+             /* keep swapping */
+             for (size_t count = 0; count < element_size / 2; ++count) {
+                  char temp = *start_byte;
+                  *start_byte = *end_byte;
+                  *end_byte = temp;
+                  ++start_byte;
+                  --end_byte;
+             }
+         }
+  }
   float_tensor_proto.set_raw_data(rawdata, len);
   T float_data2[4];
   auto status = UnpackTensor(float_tensor_proto, model_path, float_data2, 4);
@@ -104,6 +122,42 @@ std::vector<BFloat16> CreateValues<BFloat16>() {
 
 template <typename T>
 void WriteDataToFile(FILE* fp, const std::vector<T>& test_data) {
+  char *bytes1 = (char *)test_data.data();
+  std::cout<<"raw data before conversion ";
+  for (int j=0; j<4; j++)
+  {
+    for(int k=0; k<sizeof(T); k++)
+    std::cout<<std::hex<<(int)bytes1[(j*sizeof(T))+k]<<" ";
+    std::cout<<std::endl;
+  }
+  std::cout<<std::endl;
+
+  if (1) {
+         std::cout<<"Doing byte swapping in WriteDataToFile tensorutils_test.cc"<<std::endl;
+         const size_t element_size = sizeof(T);
+         const size_t num_elements = test_data.size();
+         for (size_t i = 0; i < num_elements; ++i) {
+             char* start_byte = bytes1 + i * element_size;
+             char* end_byte = start_byte + element_size - 1;
+             /* keep swapping */
+             for (size_t count = 0; count < element_size / 2; ++count) {
+                  char temp = *start_byte;
+                  *start_byte = *end_byte;
+                  *end_byte = temp;
+                  ++start_byte;
+                  --end_byte;
+             }
+         }
+  }
+  char *bytes = (char *)test_data.data();
+  std::cout<<"raw data after conversion ";
+  for (int j=0; j<4; j++)
+  {
+    for(int k=0; k<sizeof(T); k++)
+    std::cout<<std::hex<<(int)bytes[(j*sizeof(T))+k]<<" ";
+    std::cout<<std::endl;
+  }
+  std::cout<<std::endl;
   size_t size_in_bytes = test_data.size() * sizeof(T);
   ASSERT_EQ(size_in_bytes, fwrite(test_data.data(), 1, size_in_bytes, fp));
 }
@@ -148,8 +202,29 @@ void UnpackAndValidate(const TensorProto& tensor_proto, const Path& model_path, 
   auto st = utils::UnpackTensor(tensor_proto, model_path, val.data(), test_data.size());
   ASSERT_TRUE(st.IsOK()) << st.ErrorMessage();
 
+  char *bytes1 = (char *)val.data();
+  if (1) {
+         std::cout<<"Doing byte swapping in WriteDataToFile UnpackAndValidate tensorutils_test.cc"<<std::endl;
+         const size_t element_size = sizeof(T);
+         const size_t num_elements = test_data.size();
+         for (size_t i = 0; i < num_elements; ++i) {
+             char* start_byte = bytes1 + i * element_size;
+             char* end_byte = start_byte + element_size - 1;
+             /* keep swapping */
+             for (size_t count = 0; count < element_size / 2; ++count) {
+                  char temp = *start_byte;
+                  *start_byte = *end_byte;
+                  *end_byte = temp;
+                  ++start_byte;
+                  --end_byte;
+             }
+         }
+  }
+
+
   // Validate data
   for (size_t i = 0; i < test_data.size(); i++) {
+    std::cout<<"val[i]"<<val[i]<<"test_data[i]"<<test_data[i]<<std::endl;
     ASSERT_TRUE(val[i] == test_data[i]);  // need to use ASSERT_TRUE with '==' to handle MFLoat16 and BFloat16
   }
 }
@@ -182,12 +257,19 @@ void TestUnpackExternalTensor(TensorProto_DataType type, const Path& model_path)
 }  // namespace
 TEST(TensorProtoUtilsTest, UnpackTensorWithExternalData) {
   Path model_path;
+  std::cout<<"float "<<std::endl;
   TestUnpackExternalTensor<float>(TensorProto_DataType_FLOAT, model_path);
+  std::cout<<"Double"<<std::endl;
   TestUnpackExternalTensor<double>(TensorProto_DataType_DOUBLE, model_path);
+  std::cout<<"int32"<<std::endl;
   TestUnpackExternalTensor<int32_t>(TensorProto_DataType_INT32, model_path);
+  std::cout<<"int8"<<std::endl;
   TestUnpackExternalTensor<int8_t>(TensorProto_DataType_INT8, model_path);
+  std::cout<<"float16"<<std::endl;
   TestUnpackExternalTensor<MLFloat16>(TensorProto_DataType_FLOAT16, model_path);
+  std::cout<<"bloat16"<<std::endl;
   TestUnpackExternalTensor<BFloat16>(TensorProto_DataType_BFLOAT16, model_path);
+  std::cout<<"bool"<<std::endl;
   TestUnpackExternalTensor<bool>(TensorProto_DataType_BOOL, model_path);
 }
 
@@ -325,6 +407,24 @@ static void TestConstantNodeConversionWithExternalData(TensorProto_DataType type
   std::vector<T> val(test_data.size());
   auto st = utils::UnpackTensor(tp, model_path, val.data(), test_data.size());
   ASSERT_TRUE(st.IsOK()) << st.ErrorMessage();
+  char *bytes1 = (char *)val.data();
+  if (1) {
+         std::cout<<"Doing byte swapping in TestConstantNodeConversionWithExternalData tensorutils_test.cc"<<std::endl;
+         const size_t element_size = sizeof(T);
+         const size_t num_elements = test_data.size();
+         for (size_t i = 0; i < num_elements; ++i) {
+             char* start_byte = bytes1 + i * element_size;
+             char* end_byte = start_byte + element_size - 1;
+             /* keep swapping */
+             for (size_t count = 0; count < element_size / 2; ++count) {
+                  char temp = *start_byte;
+                  *start_byte = *end_byte;
+                  *end_byte = temp;
+                  ++start_byte;
+                  --end_byte;
+             }
+         }
+  }
   for (size_t i = 0; i < test_data.size(); i++) {
     ASSERT_EQ(val[i], test_data[i]);
   }

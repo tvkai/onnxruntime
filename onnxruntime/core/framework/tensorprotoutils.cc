@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights or_proto.set_raw_data
 // Licensed under the MIT License.
 
 #include "core/framework/tensorprotoutils.h"
@@ -103,6 +103,8 @@ static Status UnpackTensorWithRawDataImpl(const void* raw_data, size_t raw_data_
                            "UnpackTensor: the pre-allocated size does not match the raw data size, expected ",
                            expected_size_in_bytes, ", got ", dst.size_bytes());
   }
+
+  std::cout<<"Invoking ReadLittleEndian()"<<std::endl;
 
   // ReadLittleEndian checks src and dst buffers are the same size
   return onnxruntime::utils::ReadLittleEndian(element_size, src, dst);
@@ -634,6 +636,7 @@ Status TensorProtoToTensor(const Env& env, const ORTCHAR_T* model_path,
         env, external_data_file_path.c_str(), file_offset, raw_data_len,
         raw_data, deleter_for_file_data.d));
   } else if (utils::HasRawData(tensor_proto)) {
+
     raw_data = const_cast<char*>(tensor_proto.raw_data().data());
     // TODO The line above has const-correctness issues. Below is a possible fix which copies the tensor_proto data
     //      into a writeable buffer. However, it requires extra memory which may exceed the limit for certain tests.
@@ -678,6 +681,7 @@ Status TensorProtoToTensor(const Env& env, const ORTCHAR_T* model_path,
     CASE_PROTO(FLOAT16, MLFloat16);
     CASE_PROTO(BFLOAT16, BFloat16);
     case ONNX_NAMESPACE::TensorProto_DataType::TensorProto_DataType_STRING:
+
       ORT_RETURN_IF_ERROR(UnpackTensor<std::string>(tensor_proto, raw_data, raw_data_len,
                                                     static_cast<std::string*>(preallocated),
                                                     static_cast<size_t>(tensor_size)));
@@ -785,6 +789,26 @@ ONNX_NAMESPACE::TensorProto TensorToTensorProto(const Tensor& tensor, const std:
       *mutable_string_data->Add() = *f;
     }
   } else {
+
+    std::cout<<"In TensorToTensorProto before set_raw_data ( Doing Byte Swapping ) tensorprotoutils.cc"<<std::endl;
+    char* bytes = (char*)tensor.DataRaw();
+    /*onnx is little endian serialized always-tweak byte order if needed*/
+    if (1) {
+         const size_t element_size = tensor.DataType()->Size();
+         const size_t num_elements = tensor.Shape().Size();
+         for (size_t i = 0; i < num_elements; ++i) {
+             char* start_byte = bytes + i * element_size;
+             char* end_byte = start_byte + element_size - 1;
+             /* keep swapping */
+             for (size_t count = 0; count < element_size / 2; ++count) {
+                  char temp = *start_byte;
+                  *start_byte = *end_byte;
+                  *end_byte = temp;
+                  ++start_byte;
+                  --end_byte;
+             }
+         }
+    }
     tensor_proto.set_raw_data(tensor.DataRaw(), tensor.SizeInBytes());
   }
 

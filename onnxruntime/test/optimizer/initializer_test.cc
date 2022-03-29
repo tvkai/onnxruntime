@@ -80,6 +80,27 @@ TEST(OptimizerInitializerTest, LoadExternalData) {
 
         if (offset + length <= tensor_data_span.size()) {
           Initializer i(tensor_proto, tensor_data_dir_path);
+
+            /*onnx is little endian serialized always-tweak byte order if needed*/
+          if (1) {
+              char* bytes = (char*)i.data<int32_t>();
+              std::cout<<"Doing byte swapping in TestInitializerRawData OptimizerInitializerTest initializer_test.cc"<<std::endl;
+              const size_t element_size = sizeof(int32_t);
+              const size_t num_elements = i.size();
+              for (size_t j = 0; j < num_elements; ++j) {
+                char* start_byte = bytes + j * element_size;
+                char* end_byte = start_byte + element_size - 1;
+                /* keep swapping */
+                for (size_t count = 0; count < element_size / 2; ++count) {
+                  char temp = *start_byte;
+                  *start_byte = *end_byte;
+                  *end_byte = temp;
+                  ++start_byte;
+                  --end_byte;
+                }
+             }
+          }
+
           EXPECT_EQ(gsl::make_span(i.data<int32_t>(), i.size()), tensor_data_span.subspan(offset, length));
         } else {
           EXPECT_THROW(Initializer i(tensor_proto, tensor_data_dir_path), OnnxRuntimeException);
@@ -136,6 +157,27 @@ void TestInitializerRawData() {
   tensor_proto.set_name("OptimizerInitializerTest_RawData");
   tensor_proto.add_dims(3);
   tensor_proto.add_dims(4);
+  
+  char* bytes = (char*)data.data();
+  /*onnx is little endian serialized always-tweak byte order if needed*/
+  if (1) {
+
+         std::cout<<"Doing byte swapping in TestInitializerRawData initializer_test.cc "<<std::endl;
+         const size_t element_size = sizeof(T);
+         const size_t num_elements = data.size();
+         for (size_t i = 0; i < num_elements; ++i) {
+             char* start_byte = bytes + i * element_size;
+             char* end_byte = start_byte + element_size - 1;
+             /* keep swapping */
+             for (size_t count = 0; count < element_size / 2; ++count) {
+                  char temp = *start_byte;
+                  *start_byte = *end_byte;
+                  *end_byte = temp;
+                  ++start_byte;
+                  --end_byte;
+             }
+         }
+  }
   tensor_proto.set_raw_data(data.data(), data.size() * sizeof(T));
 
   Initializer init(tensor_proto, Path());
