@@ -79,7 +79,14 @@ class Initializer final {
 
     if (tensor_proto.data_location() != ONNX_NAMESPACE::TensorProto_DataLocation_EXTERNAL) {
       if (utils::HasRawData(tensor_proto)) {
+        std::cout<<"New change in Initializer.h"<<std::endl;
+        auto status = onnxruntime::utils::UnpackInitializerData(tensor_proto, temp_raw_data_); 
+        raw_data_.assign(temp_raw_data_.begin(), temp_raw_data_.end());
+#if 0
+        onnxruntime::utils::UnpackTensor(*tensor_proto, tensor_proto->raw_data().data(), 
+                                          tensor_proto->raw_data().size(), raw_data_.data(),);
         raw_data_.assign(tensor_proto.raw_data().begin(), tensor_proto.raw_data().end());
+#endif
       } else {
         switch (data_type_) {
           case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16:
@@ -168,7 +175,49 @@ class Initializer final {
 
     if (!raw_data_.empty()) {
       tensor_proto.clear_raw_data();
-      tensor_proto.set_raw_data(raw_data_.data(), raw_data_.size());
+      size_t element_size = 0;
+      switch(data_type_) {
+         case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16:
+                              element_size = sizeof(int32_t);
+                              break; 
+         case ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16:
+                              element_size = sizeof(float);
+                              break;
+         case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE: 
+                              element_size = sizeof(double);
+                              break; 
+         case ONNX_NAMESPACE::TensorProto_DataType_INT8:
+                              element_size = sizeof(int8_t);
+                              break;
+         case ONNX_NAMESPACE::TensorProto_DataType_UINT8:
+                              element_size = sizeof(uint8_t);
+                              break;
+         case ONNX_NAMESPACE::TensorProto_DataType_INT32:
+                              element_size = sizeof(int32_t);
+                              break;
+         case ONNX_NAMESPACE::TensorProto_DataType_INT64:
+                              element_size = sizeof(int64_t);
+                              break; 
+      }  
+     
+   
+     std::cout<<"Hit ToProto byteswap"<<std::endl;
+     temp_raw_data_.assign(raw_data_.begin(), raw_data_.end());
+     char *bytes = (char *)&temp_raw_data_;
+     const size_t num_elements = size_;
+     for (size_t i = 0; i < num_elements; ++i) {
+         char* start_byte =  bytes + i * element_size;
+         char* end_byte = start_byte + element_size - 1;
+         /* keep swapping */
+         for (size_t count = 0; count < element_size / 2; ++count) {
+              char temp = *start_byte;
+              *start_byte = *end_byte;
+              *end_byte = temp;
+              ++start_byte;
+              --end_byte;
+         }
+      }
+      tensor_proto.set_raw_data(temp_raw_data_.data(), temp_raw_data_.size());
     } else {
       switch (data_type_) {
         case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16:
@@ -803,6 +852,7 @@ class Initializer final {
   int64_t size_;
 
   std::vector<char> raw_data_;
+  std::vector<uint8_t> temp_raw_data_;
   std::vector<float> float_data_;
   std::vector<uint16_t> float16_data_;
   std::vector<double> double_data_;

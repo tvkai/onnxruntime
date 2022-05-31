@@ -413,7 +413,34 @@ bool ReshapeFusion::Fuse_Subgraph(Node& reshape, Graph& graph, const logging::Lo
   shape_initializer_proto.set_name(shape_def->Name());
   shape_initializer_proto.add_dims(static_cast<int64_t>(shape_value.size()));
   shape_initializer_proto.set_data_type(ONNX_NAMESPACE::TensorProto_DataType_INT64);
+  std::cout<<"shape_value"<<std::endl;
+  for( long unsigned int i=0; i<shape_value.size(); i++ )
+  {
+    std::cout << shape_value[i] << " " ;
+  } 
+  std::cout<<std::endl;
+
+  char* bytes = (char*)shape_value.data();
+  /*onnx is little endian serialized always-tweak byte order if needed*/
+  if (1) {
+     std::cout<<"DEBUG Doing byte swapping in reshape fusion"<<std::endl;
+     const size_t element_size = sizeof(int64_t);
+     const size_t num_elements = shape_value.size();
+     for (size_t i = 0; i < num_elements; ++i) {
+         char* start_byte = bytes + i * element_size;
+         char* end_byte = start_byte + element_size - 1;
+         /* keep swapping */
+         for (size_t count = 0; count < element_size / 2; ++count) {
+              char temp = *start_byte;
+              *start_byte = *end_byte;
+              *end_byte = temp;
+              ++start_byte;
+              --end_byte;
+         }
+      }
+  }
   shape_initializer_proto.set_raw_data(shape_value.data(), shape_value.size() * sizeof(int64_t));
+ 
   auto& new_node_arg = graph_utils::AddInitializer(graph, shape_initializer_proto);
 
   // Safely remove concat parent nodes which have only one output

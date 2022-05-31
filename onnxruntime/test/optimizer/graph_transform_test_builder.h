@@ -82,6 +82,7 @@ class ModelTestBuilder {
   template <typename T>
   NodeArg* MakeInitializer(const std::vector<int64_t>& shape, const std::vector<T>& data) {
     std::string name = graph_.GenerateNodeArgName("constant");
+
     ONNX_NAMESPACE::TensorProto tensor_proto;
     tensor_proto.set_name(name);
     tensor_proto.set_data_type(utils::ToTensorProtoElementType<T>());
@@ -89,10 +90,22 @@ class ModelTestBuilder {
     char* bytes = (char*)data.data();
     /*onnx is little endian serialized always-tweak byte order if needed*/
     if (1) {
+        int i;
+        int j;
+        char *srcbytes = (char *)bytes;
+        const size_t element_size = sizeof(T);
+        const size_t num_elements = data.size();
 
-         std::cout<<"Doing byte swapping in MakeInitializer graph_transform_test_builder.h "<<std::endl;
-         const size_t element_size = sizeof(T);
-         const size_t num_elements = data.size();
+        std::cout<<"Doing byte swapping in MakeInitializer graph_transform_test_builder.h "<<"num_elements "<<num_elements<<"element_size "<<element_size<<std::endl;
+        std::cout<<"Source:"<<std::endl;
+        for(i=0; i<(int)num_elements; i++)
+        {
+          for(j=0; j<(int)element_size; j++)
+          {
+             std::cout<<std::hex<<(int)*(srcbytes+(i*element_size)+j)<<" ";
+          }
+          std::cout<<std::endl;
+        }
          for (size_t i = 0; i < num_elements; ++i) {
              char* start_byte = bytes + i * element_size;
              char* end_byte = start_byte + element_size - 1;
@@ -105,6 +118,16 @@ class ModelTestBuilder {
                   --end_byte;
              }
          }
+       std::cout<<"Destination:"<<std::endl;
+       for(i=0; i<(int)num_elements; i++)
+       { 
+          for(j=0; j<(int)element_size; j++)
+          {   
+              std::cout<<std::hex<<(int)*(srcbytes+(i*element_size)+j)<<" ";
+          }
+          std::cout<<std::endl;
+       }
+
       }
 
     tensor_proto.set_raw_data(data.data(), data.size() * sizeof(T));

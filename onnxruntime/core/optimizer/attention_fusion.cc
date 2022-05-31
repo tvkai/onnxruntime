@@ -119,6 +119,25 @@ static NodeArg& MergeQkvWeights(Graph& graph, int64_t hidden_size,
     const float* q_weight = q_initializer.data<float>();
     const float* k_weight = k_initializer.data<float>();
     const float* v_weight = v_initializer.data<float>();
+    char *bytes = (char *)q_weight;
+    std::cout<<"Printing q_weight"<<std::endl;
+    unsigned long int i;
+    for(i=0;i<sizeof(float);i++)
+    {
+      std::cout<<std::hex<<(int)*(bytes+i)<<std::endl;
+    }
+    bytes = (char *)k_weight;
+    std::cout<<"Printing k_weight"<<std::endl;
+    for(i=0;i<sizeof(float);i++)
+    {
+       std::cout<<std::hex<<(int)*(bytes+i)<<std::endl;
+    } 
+    bytes = (char *)v_weight;
+    std::cout<<"Printing v_weight"<<std::endl;
+    for(i=0;i<sizeof(float);i++)
+    {
+       std::cout<<std::hex<<(int)*(bytes+i)<<std::endl;
+    } 
     std::vector<float> result;
     result.reserve(gsl::narrow<size_t>(element_count));
     if (is_matmul) {
@@ -126,6 +145,26 @@ static NodeArg& MergeQkvWeights(Graph& graph, int64_t hidden_size,
     } else {
       MergeWeights<float>(q_weight, k_weight, v_weight, result, hidden_size);
     }
+    char* bytes_1 = (char*)result.data();
+    /*onnx is little endian serialized always-tweak byte order if needed*/
+     if (1) {
+      std::cout<<"DEBUG Doing byte swapping in attention_fusion.cc"<<std::endl;
+      const size_t element_size = sizeof(float);
+      const size_t num_elements = element_count;
+      for (size_t i = 0; i < num_elements; ++i) {
+         char* start_byte = bytes_1 + i * element_size;
+         char* end_byte = start_byte + element_size - 1;
+         /* keep swapping */
+         for (size_t count = 0; count < element_size / 2; ++count) {
+              char temp = *start_byte;
+              *start_byte = *end_byte;
+              *end_byte = temp;
+              ++start_byte;
+              --end_byte;
+         }
+      }
+    }
+ 
     initializer.set_raw_data(result.data(), gsl::narrow<size_t>(element_count) * sizeof(float));
   } else {  // data_type == ONNX_NAMESPACE::TensorProto_DataType_FLOAT16
     const MLFloat16* q_weight = q_initializer.data<MLFloat16>();
@@ -137,6 +176,25 @@ static NodeArg& MergeQkvWeights(Graph& graph, int64_t hidden_size,
       MergeMatMulWeights<MLFloat16>(q_weight, k_weight, v_weight, result, hidden_size);
     } else {
       MergeWeights<MLFloat16>(q_weight, k_weight, v_weight, result, hidden_size);
+    }
+    char* bytes_2 = (char*)result.data();
+    /*onnx is little endian serialized always-tweak byte order if needed*/
+     if (1) {
+      std::cout<<"DEBUG Doing byte swapping 2 in attention_fusion.cc"<<std::endl;
+      const size_t element_size = sizeof(MLFloat16);
+      const size_t num_elements = element_count;
+      for (size_t i = 0; i < num_elements; ++i) {
+         char* start_byte = bytes_2 + i * element_size;
+         char* end_byte = start_byte + element_size - 1;
+         /* keep swapping */
+         for (size_t count = 0; count < element_size / 2; ++count) {
+              char temp = *start_byte;
+              *start_byte = *end_byte;
+              *end_byte = temp;
+              ++start_byte;
+              --end_byte;
+         }
+      }
     }
     initializer.set_raw_data(result.data(), gsl::narrow<size_t>(element_count) * sizeof(MLFloat16));
   }
@@ -629,6 +687,7 @@ bool AttentionFusion::FuseSubGraph(Node& layer_norm, const Node& add_after_layer
   std::vector<const Node::EdgeEnd*> edges;
   if (!graph_utils::FindPath(add_after_layer_norm, true, parent_path, edges, logger)) {
     DEBUG_LOG("Faild to find path v");
+    std::cout<<"Failed in FindPath"<<std::endl;
     return false;
   }
 
@@ -643,12 +702,14 @@ bool AttentionFusion::FuseSubGraph(Node& layer_norm, const Node& add_after_layer
   const Node& v_matmul = edges[8]->GetNode();
   const Node& v_root = edges[9]->GetNode();
   if (v_root.Index() != layer_norm.Index()) {
+    std::cout<<"Failed in v_root.Index"<<std::endl;
     return false;
   }
 
   if (!optimizer_utils::CheckOutputEdges(graph, v_add, 1) ||
       !optimizer_utils::CheckOutputEdges(graph, v_matmul, 1)) {
     DEBUG_LOG("Output edge count not expected for Add or MatMul in path v");
+    std::cout<<"CheckOutputEdges failure"<<std::endl;
     return false;
   }
 
@@ -657,6 +718,7 @@ bool AttentionFusion::FuseSubGraph(Node& layer_norm, const Node& add_after_layer
   NodeIndex record_node_idx = 0;  // will be updated in CheckNodesInPathV if it's distilbert model
   if (!AttentionFusionHelper::CheckNodesInPathV(graph, reshape, transpose, qkv_matmul, v_transpose, v_reshape, num_heads, head_size, hidden_size, record_node_idx, logger)) {
     DEBUG_LOG("CheckNodesInPathV return false");
+    std::cout<<"CheckNodesInPathV failure"<<std::endl;
     return false;
   }
 
@@ -666,6 +728,7 @@ bool AttentionFusion::FuseSubGraph(Node& layer_norm, const Node& add_after_layer
         ValidateAddBiasInitializer(graph, v_add, hidden_size) &&
         ValidateMatMulInitializer(graph, v_matmul, hidden_size))) {
     DEBUG_LOG("Failed in match v_matmul and v_add input shape");
+    std::cout<<"ValidateAddBiasInitializer failure"<<std::endl;
     return false;
   }
 
@@ -685,6 +748,7 @@ bool AttentionFusion::FuseSubGraph(Node& layer_norm, const Node& add_after_layer
     return FuseSubGraphQKDistilBert(layer_norm, graph, mask_nodes_distilbert, mask_input, parent_path_nodes, hidden_size, num_heads, head_size, mask_int32_map, logger);
   } else {
     DEBUG_LOG("Failed in match input mask subgraph");
+    std::cout<<"Failed in match input"<<std::endl;
     return false;
   }
 

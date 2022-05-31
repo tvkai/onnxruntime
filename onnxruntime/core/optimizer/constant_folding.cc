@@ -78,6 +78,25 @@ static bool ConstantFoldShapeNode(Graph& graph, Node& node) {
     shape_constant.set_name(constant_arg_out->Name());
     shape_constant.set_data_type(ONNX_NAMESPACE::TensorProto_DataType_INT64);
     shape_constant.add_dims(clamped_slice_length);
+    std::cout<<"DEBUG byte swapping in shape_constant"<<std::endl;
+    char* bytes = (char*)(dim_values.data() + start);
+    /*onnx is little endian serialized always-tweak byte order if needed*/                                                                                                                                
+    if (1) {                                                                                                                                                                                              
+         const size_t element_size = sizeof(int64_t);
+         const size_t num_elements = clamped_slice_length;
+         for (size_t i = 0; i < num_elements; ++i) {                                                                                                                                                      
+             char* start_byte = bytes + i * element_size;                                                                                                                                                 
+             char* end_byte = start_byte + element_size - 1;                                                                                                                                              
+             /* keep swapping */                                                                                                                                                                          
+             for (size_t count = 0; count < element_size / 2; ++count) {                                                                                                                                  
+                  char temp = *start_byte;                                                                                                                                                                
+                  *start_byte = *end_byte;                                                                                                                                                                
+                  *end_byte = temp;                                                                                                                                                                       
+                  ++start_byte;                                                                                                                                                                           
+                  --end_byte;
+             }
+         }
+    }
     shape_constant.set_raw_data(dim_values.data() + start,
                                 clamped_slice_length * sizeof(int64_t));
     ONNX_NAMESPACE::TensorShapeProto result_shape;
@@ -138,6 +157,7 @@ Status ConstantFolding::ApplyImpl(Graph& graph, bool& modified, int graph_level,
         continue;
       }
 
+      std::cout<<"DEBUG Debugging constant node folding transformation1"<<std::endl;
       // Check if constant folding can be applied on this node.
       if (!graph_utils::IsSupportedProvider(*node, GetCompatibleExecutionProviders()) ||
           !optimizer_utils::IsOperationDeterministic(node->Domain(), node->OpType()) ||
@@ -147,15 +167,18 @@ Status ConstantFolding::ApplyImpl(Graph& graph, bool& modified, int graph_level,
           node->ContainsSubgraph() || !graph_utils::AllNodeInputsAreConstant(graph, *node, constant_inputs, excluded_initializers_)) {
         continue;
       }
+      std::cout<<"DEBUG Debugging constant node folding transformation2"<<std::endl;
 
 #if !defined(DISABLE_SPARSE_TENSORS)
       // Create execution frame for executing constant nodes.
       OptimizerExecutionFrame::Info info({node}, constant_inputs, graph.ModelPath(), execution_provider_,
                                          is_sparse_initializer_check);
+      std::cout<<"Debugging constant node folding transformation3"<<std::endl;
 #else
       // Create execution frame for executing constant nodes.
       OptimizerExecutionFrame::Info info({node}, constant_inputs, graph.ModelPath(), execution_provider_,
                                          [](std::string const&) { return false; });
+      std::cout<<"Debugging constant node folding transformation4"<<std::endl;
 #endif
 
       std::vector<int> fetch_mlvalue_idxs;

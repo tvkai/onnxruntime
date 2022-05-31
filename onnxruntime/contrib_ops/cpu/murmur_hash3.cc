@@ -60,11 +60,37 @@ inline uint64_t rotl64(uint64_t x, int8_t r) {
 // handle aligned reads, do the conversion here
 
 FORCE_INLINE uint32_t getblock(const uint32_t* p, int i) {
+//  return p[i];
+#if 0
   return p[i];
+#else
+  const uint8_t *c = (const uint8_t *)&p[i];
+//  printf("p[i]=%X\n", p[i]);
+//  printf("ByteSwapped p[i] = %X\n", ((uint32_t)c[0] | (uint32_t)c[1] <<  8 | (uint32_t)c[2] << 16 | (uint32_t)c[3] << 24));
+  return (uint32_t)c[0] | (uint32_t)c[1] <<  8 | (uint32_t)c[2] << 16 | (uint32_t)c[3] << 24;
+#endif
+
 }
 
 FORCE_INLINE uint64_t getblock(const uint64_t* p, int i) {
+  //return p[i];
+#if 0
   return p[i];
+#else
+    const uint8_t *c = (const uint8_t *)&p[i];
+//    printf("p[i]=%lX\n", p[i]);
+//    printf("ByteSwapped p[i] = %lX\n", ((uint64_t)c[0] | (uint64_t)c[1] <<  8 | (uint64_t)c[2] << 16 | (uint64_t)c[3] << 24 |
+//                 (uint64_t)c[4] << 32 |
+//               (uint64_t)c[5] << 40 |
+//               (uint64_t)c[6] << 48 |
+//               (uint64_t)c[7] << 56));
+
+    return (uint64_t)c[0] | (uint64_t)c[1] <<  8 | (uint64_t)c[2] << 16 | (uint64_t)c[3] << 24 |
+     (uint64_t)c[4] << 32 |
+     (uint64_t)c[5] << 40 |
+     (uint64_t)c[6] << 48 |
+     (uint64_t)c[7] << 56;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -199,19 +225,69 @@ Status MurmurHash3::Compute(OpKernelContext* ctx) const {
       ++output;
     }
   } else {
-    auto input = reinterpret_cast<const unsigned char*>(keys->DataRaw());
+    
     //input_element_bytes is 4, 8,.. less than 4 bytes is not allowed
     int input_num_bytes = static_cast<int>(input_element_bytes);
+    std::cout<<"input_num_bytes "<<input_num_bytes<<std::endl;
+    auto input = reinterpret_cast<const unsigned char*>(keys->DataRaw());
+    char *input_cp = (char *)malloc(input_count * input_num_bytes);
+    char *input_cp_org = input_cp;
+    std::cout<<"Dping byte swapping"<<std::endl;
+    memcpy(input_cp, input, input_count * input_num_bytes);
+    std::cout<<"Source:"<<std::endl;
+    int i = 0;
+    int j = 0;
+    size_t  element_size ;
+    size_t num_elements = input_count;
+    element_size = input_num_bytes;
+    for(i=0; i<(int)num_elements; i++)
+    {
+        for(j=0; j<(int)element_size; j++)
+        {
+            std::cout<<std::hex<<(int)*(input_cp+(i*element_size)+j)<<" ";
+        }
+        std::cout<<std::endl;
+    } 
+    /*onnx is little endian serialized always-tweak byte order if needed*/
+    if (1) {
+         std::cout<<"element_size "<<element_size<<std::endl;
+         std::cout<<"num_elements "<<num_elements<<std::endl;
+         for (size_t i = 0; i < num_elements; ++i) {
+             char* start_byte = input_cp + i * element_size;
+             char* end_byte = start_byte + element_size - 1;
+             /* keep swapping */
+             for (size_t count = 0; count < element_size / 2; ++count) {
+                  char temp = *start_byte;
+                  *start_byte = *end_byte;
+                  *end_byte = temp;
+                  ++start_byte;
+                  --end_byte;
+             }
+         }
+     }
+     std::cout<<"Destination:"<<std::endl;
+     for(i=0; i<(int)num_elements; i++)
+     {
+        for(j=0; j<(int)element_size; j++)
+        {
+           std::cout<<std::hex<<(int)*(input_cp+(i*element_size)+j)<<" ";
+        }
+        std::cout<<std::endl;
+     }
+
     ORT_ENFORCE(input_num_bytes % 4 == 0);
-    const auto input_end = input + input_count * input_num_bytes;
-    while (input != input_end) {
-      MurmurHash3_x86_32(input,
+    const auto input_end = input_cp + input_count * input_num_bytes;
+    while (input_cp != input_end) {
+      std::cout<<"seed_"<<seed_<<std::endl; 
+      MurmurHash3_x86_32(input_cp,
                          input_num_bytes,
                          seed_,
                          output);
-      input += input_num_bytes;
+      std::cout<<"output "<<*output<<std::endl;
+      input_cp += input_num_bytes;
       ++output;
     }
+    free(input_cp_org);
   }
   return Status::OK();
 }

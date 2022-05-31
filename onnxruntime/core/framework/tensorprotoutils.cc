@@ -104,7 +104,7 @@ static Status UnpackTensorWithRawDataImpl(const void* raw_data, size_t raw_data_
                            expected_size_in_bytes, ", got ", dst.size_bytes());
   }
 
-  std::cout<<"Invoking ReadLittleEndian()"<<std::endl;
+  std::cout<<"Invoking ReadLittleEndian() UnpackTensorWithRawDataImpl "<<std::endl;
 
   // ReadLittleEndian checks src and dst buffers are the same size
   return onnxruntime::utils::ReadLittleEndian(element_size, src, dst);
@@ -258,7 +258,12 @@ Status UnpackTensor(const ONNX_NAMESPACE::TensorProto& tensor, const void* raw_d
                              ") does not match the data size(", tensor.field_size(), ") in proto");         \
     auto& data = tensor.field_name();                                                                       \
     for (auto data_iter = data.cbegin(); data_iter != data.cend(); ++data_iter)                             \
-      *p_data++ = *reinterpret_cast<const T*>(data_iter);                                                   \
+    {\
+      std::cout<<"UnpackTensor change"<<std::endl; \
+      auto valuem = *data_iter; \
+      *p_data++ = valuem; \
+      /* *p_data++ = *reinterpret_cast<const T*>(data_iter); */                                                  \
+    }\
     return Status::OK();                                                                                    \
   }
 
