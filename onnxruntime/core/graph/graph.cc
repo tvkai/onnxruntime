@@ -101,7 +101,14 @@ static Status MergeShapeInfo(const std::string& output_name,
                                        *utils::GetMutableOptionalTypeProto(target)->mutable_tensor_type());
     }
 #endif
-
+/*
+  ORT_TRY {
+    if (utils::HasTensorType(source)) {
+      ONNX_NAMESPACE::mergeInShapeInfo(utils::GetOptionalTypeProto(source).tensor_type(),
+                                       *utils::GetMutableOptionalTypeProto(target)->mutable_tensor_type());
+    }
+#endif
+*/
 #if !defined(DISABLE_SPARSE_TENSORS)
     else {
       ONNX_NAMESPACE::mergeInShapeInfo(source.sparse_tensor_type(), *target.mutable_sparse_tensor_type());
@@ -2397,9 +2404,13 @@ Status Graph::InferAndVerifyTypeMatch(Node& node, const OpSchema& op, const Reso
         }
         // we may have cleared the shape if there was a mismatch so handle that
         if (utils::HasShape(merge_target))
+        {
           output_def->SetShape(utils::GetShape(merge_target));
+        }
         else
+        {
           output_def->ClearShape();
+        }
       }
     }
   }
@@ -3106,8 +3117,147 @@ SaveInputsOutputsToOrtFormat(flatbuffers::FlatBufferBuilder& builder, const std:
   return builder.CreateVector(vec);
 }
 
+void ConvTens(TensorProto* tensp)
+{
+    if (tensp->has_data_type())
+    {
+        switch(tensp->data_type())
+        {
+            case TensorProto_DataType_FLOAT:
+            {
+            float* fdata; 
+            char *bytes; 
+            if (tensp->has_raw_data())
+            {
+                bytes = (char*)(tensp->mutable_raw_data()->c_str()); 
+            }
+            else
+            {
+                fdata = (float*)(tensp->mutable_float_data()->mutable_data());
+                bytes = (char*)fdata;
+            }
+            /* ORT is little endian serialized always-tweak byte order if needed*/
+            if (1)
+            {
+                std::cout<<"Doing byte swapping for little endian ORT graph.cc" << std::endl;
+                const size_t element_size = sizeof(float);
+                size_t num_elements;
+                if (tensp->has_raw_data())
+                {
+                    num_elements = tensp->raw_data().size() / element_size;
+                }
+                else
+                {
+                    num_elements = tensp->float_data_size();
+                }
+                for (size_t i = 0; i < num_elements; ++i) {
+                    char* start_byte = bytes + i * element_size;
+                    char* end_byte = start_byte + element_size - 1;
+                    /* keep swapping */
+                    for (size_t count = 0; count < element_size / 2; ++count) {
+                        char temp = *start_byte;
+                        *start_byte = *end_byte;
+                        *end_byte = temp;
+                        ++start_byte;
+                        --end_byte;
+                    }
+                }
+            }
+            break;
+            }
+ 
+            case TensorProto_DataType_INT64:
+            {
+            uint64_t* idata;
+            char *bytes;
+
+            if (tensp->has_raw_data())
+            {
+                bytes = (char*)(tensp->mutable_raw_data()->c_str());
+            }
+            else
+            {
+                idata = (uint64_t*)(tensp->mutable_int64_data()->mutable_data());
+                bytes = (char*)idata;
+            }
+
+            /* ORT is little endian serialized always-tweak byte order if needed*/
+            if (1)
+            {
+                std::cout<<"Doing byte swapping for little endian ORT graph.cc" << std::endl;
+                const size_t element_size = sizeof(int64);
+                size_t num_elements;
+                if (tensp->has_raw_data())
+                {
+                    num_elements = tensp->raw_data().size() / element_size;
+                }
+                else
+                {
+                    num_elements = tensp->int64_data_size();
+                }
+                for (size_t i = 0; i < num_elements; ++i) {
+                    char* start_byte = bytes + i * element_size;
+                    char* end_byte = start_byte + element_size - 1;
+                    /* keep swapping */
+                    for (size_t count = 0; count < element_size / 2; ++count) {
+                        char temp = *start_byte;
+                        *start_byte = *end_byte;
+                        *end_byte = temp;
+                        ++start_byte;
+                        --end_byte;
+                    }
+                }
+            }
+            
+            break;
+            }
+        }
+    }
+    else
+    {
+        std::cout << "No Data Type" << std::endl;
+    }
+}
+
+void PrintTens(TensorProto* tensp)
+{
+    if (tensp->has_data_type())
+    {
+        switch(tensp->data_type())
+        {
+            case TensorProto_DataType_FLOAT:
+            {
+            float* fdata = (float*)(tensp->mutable_float_data()->mutable_data());
+            if (tensp->name() == "Parameter194")
+            {
+                uint32_t* ffdata = (uint32_t*)fdata;
+                for (int ii=0; ii < tensp->float_data_size(); ii++)
+                   std::cout << "PrintTens fdata[" << ii << "]=" << std::hex << (ffdata[ii]) 
+                             << std::dec << std::endl;
+            }
+            break;
+            }
+
+            case TensorProto_DataType_INT64:
+            {
+            uint64_t* idata = (uint64_t*)(tensp->mutable_int64_data()->mutable_data());
+            break;
+            }
+        }
+    }
+    else
+    {
+        std::cout << "No Data Type" << std::endl;
+    }
+}
+
 common::Status Graph::SaveToOrtFormat(flatbuffers::FlatBufferBuilder& builder,
                                       flatbuffers::Offset<fbs::Graph>& fbs_graph) const {
+  auto& tens = GetAllInitializedTensors();
+  for (auto& [name, tensor_p] : tens)
+  {
+     ConvTens((TensorProto*)tensor_p);
+  } 
   auto inputs = SaveInputsOutputsToOrtFormat(builder, graph_inputs_including_initializers_);
   auto outputs = SaveInputsOutputsToOrtFormat(builder, graph_outputs_);
 
