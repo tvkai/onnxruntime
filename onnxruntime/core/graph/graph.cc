@@ -101,14 +101,7 @@ static Status MergeShapeInfo(const std::string& output_name,
                                        *utils::GetMutableOptionalTypeProto(target)->mutable_tensor_type());
     }
 #endif
-/*
-  ORT_TRY {
-    if (utils::HasTensorType(source)) {
-      ONNX_NAMESPACE::mergeInShapeInfo(utils::GetOptionalTypeProto(source).tensor_type(),
-                                       *utils::GetMutableOptionalTypeProto(target)->mutable_tensor_type());
-    }
-#endif
-*/
+
 #if !defined(DISABLE_SPARSE_TENSORS)
     else {
       ONNX_NAMESPACE::mergeInShapeInfo(source.sparse_tensor_type(), *target.mutable_sparse_tensor_type());
