@@ -705,6 +705,28 @@ struct InsertIndices {
       // Conversion on the fly to the target data type
       std::vector<T> indices(indices_data.cbegin(), indices_data.cend());
       indices_tp.mutable_raw_data()->assign(reinterpret_cast<const char*>(indices.data()), indices.size() * sizeof(T));
+      char *bytes;
+      bytes = (char*)(indices_tp.mutable_raw_data()->c_str());
+      if (1)
+      {
+          /* Convert TensorProto to Little Endian as expected by UnpackInitializerData */
+          std::cout << "Doing byte swapping for little endian sparse_kernels_test.cc" << std::endl;
+          const size_t element_size = sizeof(T);
+          size_t num_elements = indices_tp.raw_data().size() / element_size;
+
+          for (size_t i = 0; i < num_elements; ++i) {
+              char* start_byte = bytes + i * element_size;
+              char* end_byte = start_byte + element_size - 1;
+              /* keep swapping */
+              for (size_t count = 0; count < element_size / 2; ++count) {
+                  char temp = *start_byte;
+                  *start_byte = *end_byte;
+                  *end_byte = temp;
+                  ++start_byte;
+                  --end_byte;
+              }
+          }
+      }
     }
   }
 };
@@ -1203,14 +1225,12 @@ static void TestDenseToSparseConversion(size_t indices_start,
                                                            const SparseTensorProto& actual)>
                                             checker) {
   TestDenseToSparseConversionValues<T>(indices_start, inserter, checker);
-  std::cout<<"TestDenseAllZerosToSparseConversion Before"<<std::endl;
   TestDenseAllZerosToSparseConversion<T>(inserter, checker);
 }
 
 TEST(SparseTensorConversionTests, TestDenseToSparseConversion) {
   // This one will test indices that are less than max int8 value
   // which should result in int8 indices
-  std::cout<<"TestDenseToSparseConversion float start"<<std::endl;
   TestDenseToSparseConversion<float>(
       20U,
       [](const std::vector<float>& values, TensorProto& tp) {
@@ -1220,7 +1240,6 @@ TEST(SparseTensorConversionTests, TestDenseToSparseConversion) {
       },
       RawSparseDataChecker<float>);
 
-  std::cout<<"TestDenseToSparseConversion float end"<<std::endl;
 
   // This one will test indices that are max(int8) < ind < max(int16) value
   // which should result in int16 indices
@@ -1233,7 +1252,6 @@ TEST(SparseTensorConversionTests, TestDenseToSparseConversion) {
       },
       RawSparseDataChecker<double>);
 
-  std::cout<<"TestDenseToSparseConversion double start"<<std::endl; 
 
   // This one will test indices that are max(int16) < ind < max(int32) value
   // which should result in int32 indices
@@ -1247,7 +1265,6 @@ TEST(SparseTensorConversionTests, TestDenseToSparseConversion) {
         }
       },
       RawSparseDataChecker<BFloat16>);
-   std::cout<<"TestDenseToSparseConversion double end"<<std::endl;
 
   // Protobuf can not hold anything more than 2Gb and it overflows. Can't test 64-bit indices
   // on conversion unless explicitly created.
@@ -1262,7 +1279,6 @@ TEST(SparseTensorConversionTests, TestDenseToSparseConversion) {
         }
       },
       RawSparseDataChecker<MLFloat16>);
-   std::cout<<"TestDenseToSparseConversion  MLFloat16 end"<<std::endl;
 
   TestDenseToSparseConversion<int16_t>(
       20U,
@@ -1272,7 +1288,6 @@ TEST(SparseTensorConversionTests, TestDenseToSparseConversion) {
         tp.mutable_int32_data()->Add(values.cbegin(), values.cend());
       },
       RawSparseDataChecker<int16_t>);
-  std::cout<<"TestDenseToSparseConversion int16_t end"<<std::endl;
 
   TestDenseToSparseConversion<uint16_t>(
       20U,
@@ -1282,7 +1297,6 @@ TEST(SparseTensorConversionTests, TestDenseToSparseConversion) {
         tp.mutable_int32_data()->Add(values.cbegin(), values.cend());
       },
       RawSparseDataChecker<uint16_t>);
-  std::cout<<"TestDenseToSparseConversion  uint16_t end"<<std::endl;
 
   TestDenseToSparseConversion<int32_t>(
       20U,
@@ -1292,7 +1306,6 @@ TEST(SparseTensorConversionTests, TestDenseToSparseConversion) {
         tp.mutable_int32_data()->Add(values.cbegin(), values.cend());
       },
       RawSparseDataChecker<int32_t>);
-  std::cout<<"TestDenseToSparseConversion int32_t end"<<std::endl;
 
   TestDenseToSparseConversion<uint32_t>(
       20U,
@@ -1302,7 +1315,6 @@ TEST(SparseTensorConversionTests, TestDenseToSparseConversion) {
         tp.mutable_uint64_data()->Add(values.cbegin(), values.cend());
       },
       RawSparseDataChecker<uint32_t>);
-  std::cout<<"TestDenseToSparseConversion uint32_t end"<<std::endl;
   
   TestDenseToSparseConversion<int64_t>(
       20U,
@@ -1313,7 +1325,6 @@ TEST(SparseTensorConversionTests, TestDenseToSparseConversion) {
       },
       RawSparseDataChecker<int64_t>);
 
-  std::cout<<"TestDenseToSparseConversion int64_t  end"<<std::endl;
 
   TestDenseToSparseConversion<uint64_t>(
       20U,
@@ -1323,7 +1334,6 @@ TEST(SparseTensorConversionTests, TestDenseToSparseConversion) {
         tp.mutable_uint64_data()->Add(values.cbegin(), values.cend());
       },
       RawSparseDataChecker<uint64_t>);
-  std::cout<<"TestDenseToSparseConversion  uint64_t  end"<<std::endl;
 
   TestDenseToSparseConversion<int8_t>(
       20U,
@@ -1333,9 +1343,7 @@ TEST(SparseTensorConversionTests, TestDenseToSparseConversion) {
         tp.mutable_int32_data()->Add(values.cbegin(), values.cend());
       },
       RawSparseDataChecker<int8_t>);
-  std::cout<<"TestDenseToSparseConversion   int8_t end"<<std::endl;
 
-  std::cout<<"TestDenseToSparseConversion "<<std::endl;
   TestDenseToSparseConversion<uint8_t>(
       20U,
       [](const std::vector<uint8_t>& values, TensorProto& tp) {
@@ -1343,7 +1351,6 @@ TEST(SparseTensorConversionTests, TestDenseToSparseConversion) {
         RawDataWriter(values, tp, TensorProto_DataType_UINT8);
       },
       RawSparseDataChecker<uint8_t>);
- std::cout<<"TestDenseToSparseConversion  uint8_t "<<std::endl;
 }
 
 TEST(SparseTensorConversionTests, CsrConversion) {
