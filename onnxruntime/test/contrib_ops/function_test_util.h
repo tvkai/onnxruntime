@@ -86,7 +86,7 @@ struct FunctionTestCase {
     if (1) {
          std::cout<<"Doing byte swapping in AddInput test/contrib_ops/function_test_util.h "<<std::endl;
          const size_t element_size = sizeof(T);
-         const size_t num_elements = shape.size();
+         const size_t num_elements = shape.size()/element_size;
          std::cout<<"num_elements"<<num_elements<<std::endl;
          for (size_t i = 0; i < num_elements; ++i) {
              char* start_byte = bytes1 + i * element_size;

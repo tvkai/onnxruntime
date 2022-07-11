@@ -31,7 +31,7 @@ ONNX_OPERATOR_KERNEL_EX(
     Inverse);
 
 template <typename T>
-using MatrixT = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+using MatrixT = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
 
 template <typename T>
 struct Inverse::ComputeImpl {
@@ -43,8 +43,16 @@ struct Inverse::ComputeImpl {
 
     Eigen::Map<const MatrixT<T>> input_matrix(input_data, rows, cols);
     Eigen::Map<MatrixT<T>> output_matrix(output_data, rows, cols);
+    Eigen::MatrixX<T>  g = input_matrix;
     std::cout<<"Before Calling Eigen library inverse()"<<std::endl;
+    std::cout<<input_matrix<<std::endl;
     output_matrix = input_matrix.inverse();
+    std::cout<<output_matrix<<std::endl;
+
+    std::cout<<"Before calling inverse on g"<<std::endl;
+    std::cout<<g<<std::endl;
+    std::cout<<"Inverse on g"<<std::endl;
+    std::cout<<g.inverse()<<std::endl;
   }
 };
 
@@ -80,6 +88,7 @@ Status Inverse::Compute(OpKernelContext* ctx) const {
 
   std::function<void(ptrdiff_t)> fn = [elem_type, input, output, rows, cols](ptrdiff_t batch_num) {
     utils::MLTypeCallDispatcher<float, double, MLFloat16> t_disp(elem_type);
+    getpid();
     t_disp.Invoke<ComputeImpl>(input, output, batch_num, rows, cols);
   };
 

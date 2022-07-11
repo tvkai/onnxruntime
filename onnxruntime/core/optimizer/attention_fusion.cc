@@ -120,20 +120,17 @@ static NodeArg& MergeQkvWeights(Graph& graph, int64_t hidden_size,
     const float* k_weight = k_initializer.data<float>();
     const float* v_weight = v_initializer.data<float>();
     char *bytes = (char *)q_weight;
-    std::cout<<"Printing q_weight"<<std::endl;
     unsigned long int i;
     for(i=0;i<sizeof(float);i++)
     {
       std::cout<<std::hex<<(int)*(bytes+i)<<std::endl;
     }
     bytes = (char *)k_weight;
-    std::cout<<"Printing k_weight"<<std::endl;
     for(i=0;i<sizeof(float);i++)
     {
        std::cout<<std::hex<<(int)*(bytes+i)<<std::endl;
     } 
     bytes = (char *)v_weight;
-    std::cout<<"Printing v_weight"<<std::endl;
     for(i=0;i<sizeof(float);i++)
     {
        std::cout<<std::hex<<(int)*(bytes+i)<<std::endl;
@@ -145,10 +142,10 @@ static NodeArg& MergeQkvWeights(Graph& graph, int64_t hidden_size,
     } else {
       MergeWeights<float>(q_weight, k_weight, v_weight, result, hidden_size);
     }
+    std::cout<<"DEBUG Doing byte swapping in attention_fusion.cc for "<<initializer.mutable_name()<<std::endl;
     char* bytes_1 = (char*)result.data();
     /*onnx is little endian serialized always-tweak byte order if needed*/
      if (1) {
-      std::cout<<"DEBUG Doing byte swapping in attention_fusion.cc"<<std::endl;
       const size_t element_size = sizeof(float);
       const size_t num_elements = element_count;
       for (size_t i = 0; i < num_elements; ++i) {
@@ -164,7 +161,6 @@ static NodeArg& MergeQkvWeights(Graph& graph, int64_t hidden_size,
          }
       }
     }
- 
     initializer.set_raw_data(result.data(), gsl::narrow<size_t>(element_count) * sizeof(float));
   } else {  // data_type == ONNX_NAMESPACE::TensorProto_DataType_FLOAT16
     const MLFloat16* q_weight = q_initializer.data<MLFloat16>();
@@ -180,7 +176,7 @@ static NodeArg& MergeQkvWeights(Graph& graph, int64_t hidden_size,
     char* bytes_2 = (char*)result.data();
     /*onnx is little endian serialized always-tweak byte order if needed*/
      if (1) {
-      std::cout<<"DEBUG Doing byte swapping 2 in attention_fusion.cc"<<std::endl;
+      std::cout<<"DEBUG Doing byte swapping 2 in attention_fusion.cc for "<<initializer.mutable_name()<<std::endl;
       const size_t element_size = sizeof(MLFloat16);
       const size_t num_elements = element_count;
       for (size_t i = 0; i < num_elements; ++i) {

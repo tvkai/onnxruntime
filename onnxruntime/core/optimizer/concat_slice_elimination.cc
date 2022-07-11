@@ -86,26 +86,6 @@ static bool GetSliceInfo(const Graph& graph,
       Initializer init(*initializer, graph.ModelPath());
       if (initializer->data_type() == ONNX_NAMESPACE::TensorProto::INT32) {
         int32_t* init_data = init.data<int32_t>();
-
-                    char* bytes = (char *)init.data<int32_t>();
-                    if (1) {
-                        std::cout<<"Doing byte swapping in GetSliceInfo INT32 concat_slice_elimination.cc"<<std::endl;
-                        const size_t element_size = sizeof(int32_t);
-                        const size_t num_elements = init.size();
-                        for (size_t i = 0; i < num_elements; ++i) {
-                            char* start_byte = bytes + i * element_size;
-                            char* end_byte = start_byte + element_size - 1;
-
-                            for (size_t count = 0; count < element_size / 2; ++count) {
-                                 char temp = *start_byte;
-                                 *start_byte = *end_byte;
-                                 *end_byte = temp;
-                                 ++start_byte;
-                                 --end_byte;
-                            }
-                        }
-                    }
-
         std::vector<int64_t> ma(init_data, init_data + init.size());
         for (auto aa: ma)  {
             
@@ -114,26 +94,6 @@ static bool GetSliceInfo(const Graph& graph,
         return std::vector<int64_t>(init_data, init_data + init.size());
       } else if (initializer->data_type() == ONNX_NAMESPACE::TensorProto::INT64) {
         int64_t* init_data = init.data<int64_t>();
-
-                    char* bytes = (char *)init.data<int64_t>();
-                    if (1) {
-                        std::cout<<"Doing byte swapping in GetSliceInfo for INT64 concat_slice_elimination.cc"<<std::endl;
-                        const size_t element_size = sizeof(int64_t);
-                        const size_t num_elements = init.size();
-                        for (size_t i = 0; i < num_elements; ++i) {
-                            char* start_byte = bytes + i * element_size;
-                            char* end_byte = start_byte + element_size - 1;
-
-                            for (size_t count = 0; count < element_size / 2; ++count) {
-                                 char temp = *start_byte;
-                                 *start_byte = *end_byte;
-                                 *end_byte = temp;
-                                 ++start_byte;
-                                 --end_byte;
-                            }
-                        }
-                    }
-
         std::vector<int64_t> ma(init_data, init_data + init.size());
         for (auto aa: ma)  {
             std::cout << "int32 val=" << aa << std::endl;

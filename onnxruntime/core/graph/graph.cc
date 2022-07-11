@@ -1131,7 +1131,7 @@ Graph::Graph(const Model& owning_model,
 
     const gsl::not_null<TensorProto*> tensor{graph_proto_->add_initializer()};
     auto status = utils::ConstantNodeProtoToTensorProto(node, model_path, *tensor);
-
+#if 0
     const TensorProto& sparse_values = node.attribute(0).sparse_tensor().values();
     if (!(sparse_values.has_raw_data()))
     {
@@ -1182,7 +1182,7 @@ Graph::Graph(const Model& owning_model,
             }
         }
     }
-
+#endif
     ORT_ENFORCE(status.IsOK(), status.ToString());
     // Ensure initializers are also graph inputs.
     if (ir_version_ < 4) {
