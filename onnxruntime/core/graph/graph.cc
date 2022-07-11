@@ -1128,20 +1128,23 @@ Graph::Graph(const Model& owning_model,
     if (node.op_type() != kConstant) {
       continue;
     }
-
+    
     const gsl::not_null<TensorProto*> tensor{graph_proto_->add_initializer()};
     auto status = utils::ConstantNodeProtoToTensorProto(node, model_path, *tensor);
-#if 0
-    const TensorProto& sparse_values = node.attribute(0).sparse_tensor().values();
-    if (!(sparse_values.has_raw_data()))
+
+    const AttributeProto& attrib = node.attribute(0);
+    if (attrib.type() == AttributeProto_AttributeType_SPARSE_TENSOR)
     {
-        // sparse value does not have raw data, hence values will be in native endian. 
-        // Dense tensor values in raw data and hence expected to be in Little endian. 
-        // So change the endianness in Big endian system. 
-        std::cout << "Doing byte swapping for attribute of Constatnt node in graph.cc" << std::endl;
-        size_t element_size=1;
-        switch(tensor->data_type())
+        const TensorProto& sparse_values = node.attribute(0).sparse_tensor().values();
+        if ((!(sparse_values.has_raw_data())) && tensor->has_raw_data())
         {
+            // sparse value does not have raw data, hence values will be in native endian. 
+            // Dense tensor values in raw data and hence expected to be in Little endian. 
+            // So change the endianness in Big endian system. 
+            std::cout << "Doing byte swapping for attribute of Constatnt node in graph.cc" << std::endl;
+            size_t element_size=1;
+            switch(tensor->data_type())
+            {
              case TensorProto_DataType_FLOAT:
              case TensorProto_DataType_INT32:
              case TensorProto_DataType_UINT32:
@@ -1165,24 +1168,25 @@ Graph::Graph(const Model& owning_model,
              case TensorProto_DataType_COMPLEX64:
              element_size=8;
              break;
-        }
-        size_t num_elements = (tensor->raw_data().size()) / element_size;
-        char *bytes = (char*)(tensor->mutable_raw_data()->c_str());
-
-        for (size_t i = 0; i < num_elements; ++i) {
-            char* start_byte = bytes + i * element_size;
-            char* end_byte = start_byte + element_size - 1;
-              /* keep swapping */
-            for (size_t count = 0; count < element_size / 2; ++count) {
-                char temp = *start_byte;
-                *start_byte = *end_byte;
-                *end_byte = temp;
-                ++start_byte;
-                --end_byte;
             }
+            size_t num_elements = (tensor->raw_data().size()) / element_size;
+            char *bytes = (char*)(tensor->mutable_raw_data()->c_str());
+
+           for (size_t i = 0; i < num_elements; ++i) {
+                char* start_byte = bytes + i * element_size;
+                char* end_byte = start_byte + element_size - 1;
+                /* keep swapping */
+                for (size_t count = 0; count < element_size / 2; ++count) {
+                    char temp = *start_byte;
+                    *start_byte = *end_byte;
+                    *end_byte = temp;
+                    ++start_byte;
+                    --end_byte;
+                }
+           }
         }
     }
-#endif
+
     ORT_ENFORCE(status.IsOK(), status.ToString());
     // Ensure initializers are also graph inputs.
     if (ir_version_ < 4) {
