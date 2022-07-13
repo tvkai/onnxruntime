@@ -59,26 +59,6 @@ bool IsInitializerWithExpectedValue(const Graph& graph, const NodeArg& input_arg
   const auto data_type = tensor_proto->data_type();
   if (data_type == ONNX_NAMESPACE::TensorProto_DataType_FLOAT) {
     const float* val = init_const.data<float>();
-#if 0
-    char* bytes = (char *)init_const.data<float>();
-    if (1) {
-       std::cout<<"Doing byte swapping in IsInitializerWithExpectedValue float core/optimizer/utils.cc"<<std::endl;
-       const size_t element_size = sizeof(float);
-       const size_t num_elements = init_const.size();
-       for (size_t i = 0; i < num_elements; ++i) {
-           char* start_byte = bytes + i * element_size;
-           char* end_byte = start_byte + element_size - 1;
-           for (size_t count = 0; count < element_size / 2; ++count) {
-                 char temp = *start_byte;
-                 *start_byte = *end_byte;
-                 *end_byte = temp;
-                 ++start_byte;
-                 --end_byte;
-           }
-       }
-    }
-#endif
-
     if (std::isnan(val[0]) || std::isinf(val[0])) {
       if (std::isinf(val[0]) && std::isinf(expected_value) && (std::signbit(val[0]) == std::signbit(expected_value))) {
         return true;
@@ -92,26 +72,6 @@ bool IsInitializerWithExpectedValue(const Graph& graph, const NodeArg& input_arg
     }
   } else if (data_type == ONNX_NAMESPACE::TensorProto_DataType_DOUBLE) {
     const double* val = init_const.data<double>();
-#if 0
-    char* bytes = (char *)init_const.data<double>();
-    if (1) {
-       std::cout<<"Doing byte swapping in IsInitializerWithExpectedValue Double core/optimizer/utils.cc"<<std::endl;
-       const size_t element_size = sizeof(double);
-       const size_t num_elements = init_const.size();
-       for (size_t i = 0; i < num_elements; ++i) {
-           char* start_byte = bytes + i * element_size;
-           char* end_byte = start_byte + element_size - 1;
-           for (size_t count = 0; count < element_size / 2; ++count) {
-                 char temp = *start_byte;
-                 *start_byte = *end_byte;
-                 *end_byte = temp;
-                 ++start_byte;
-                 --end_byte;
-           }
-       }
-    }
-#endif
-
     if (std::isnan(val[0]) || std::isinf(val[0])) return false;
 
     const double expected_val = static_cast<double>(expected_value);
@@ -121,25 +81,6 @@ bool IsInitializerWithExpectedValue(const Graph& graph, const NodeArg& input_arg
     }
   } else if (data_type == ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) {
     const MLFloat16* val = init_const.data<MLFloat16>();
-#if 0
-    char* bytes = (char *)init_const.data<MLFloat16>();
-    if (1) {
-       std::cout<<"Doing byte swapping in IsInitializerWithExpectedValue float16 core/optimizer/utils.cc"<<std::endl;
-       const size_t element_size = sizeof(MLFloat16);
-       const size_t num_elements = init_const.size();
-       for (size_t i = 0; i < num_elements; ++i) {
-           char* start_byte = bytes + i * element_size;
-           char* end_byte = start_byte + element_size - 1;
-           for (size_t count = 0; count < element_size / 2; ++count) {
-                 char temp = *start_byte;
-                 *start_byte = *end_byte;
-                 *end_byte = temp;
-                 ++start_byte;
-                 --end_byte;
-           }
-       }
-    }
-#endif
  
     const float flt_val = math::halfToFloat(val[0].val);
     if (std::isnan(flt_val) || std::isinf(flt_val)) return false;

@@ -228,30 +228,15 @@ Status MurmurHash3::Compute(OpKernelContext* ctx) const {
     
     //input_element_bytes is 4, 8,.. less than 4 bytes is not allowed
     int input_num_bytes = static_cast<int>(input_element_bytes);
-    std::cout<<"input_num_bytes "<<input_num_bytes<<std::endl;
     auto input = reinterpret_cast<const unsigned char*>(keys->DataRaw());
     char *input_cp = (char *)malloc(input_count * input_num_bytes);
     char *input_cp_org = input_cp;
-    std::cout<<"Dping byte swapping"<<std::endl;
     memcpy(input_cp, input, input_count * input_num_bytes);
-    std::cout<<"Source:"<<std::endl;
-    int i = 0;
-    int j = 0;
-    size_t  element_size ;
     size_t num_elements = input_count;
-    element_size = input_num_bytes;
-    for(i=0; i<(int)num_elements; i++)
-    {
-        for(j=0; j<(int)element_size; j++)
-        {
-            std::cout<<std::hex<<(int)*(input_cp+(i*element_size)+j)<<" ";
-        }
-        std::cout<<std::endl;
-    } 
+    size_t element_size = input_num_bytes;
+
     /*onnx is little endian serialized always-tweak byte order if needed*/
     if (1) {
-         std::cout<<"element_size "<<element_size<<std::endl;
-         std::cout<<"num_elements "<<num_elements<<std::endl;
          for (size_t i = 0; i < num_elements; ++i) {
              char* start_byte = input_cp + i * element_size;
              char* end_byte = start_byte + element_size - 1;
@@ -265,25 +250,14 @@ Status MurmurHash3::Compute(OpKernelContext* ctx) const {
              }
          }
      }
-     std::cout<<"Destination:"<<std::endl;
-     for(i=0; i<(int)num_elements; i++)
-     {
-        for(j=0; j<(int)element_size; j++)
-        {
-           std::cout<<std::hex<<(int)*(input_cp+(i*element_size)+j)<<" ";
-        }
-        std::cout<<std::endl;
-     }
 
     ORT_ENFORCE(input_num_bytes % 4 == 0);
     const auto input_end = input_cp + input_count * input_num_bytes;
     while (input_cp != input_end) {
-      std::cout<<"seed_"<<seed_<<std::endl; 
       MurmurHash3_x86_32(input_cp,
                          input_num_bytes,
                          seed_,
                          output);
-      std::cout<<"output "<<*output<<std::endl;
       input_cp += input_num_bytes;
       ++output;
     }

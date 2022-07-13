@@ -152,7 +152,6 @@ TEST(KernelDefHashTest, DISABLED_PrintCpuKernelDefHashes) {
   KernelRegistry kernel_registry{};
   ASSERT_STATUS_OK(RegisterCPUKernels(kernel_registry));
   const auto cpu_kernel_def_hashes = kernel_registry.ExportKernelDefHashes();
-  std::cout << DumpKernelDefHashes(cpu_kernel_def_hashes) << "\n";
 }
 
 TEST(KernelDefHashTest, ExpectedCpuKernelDefHashes) {

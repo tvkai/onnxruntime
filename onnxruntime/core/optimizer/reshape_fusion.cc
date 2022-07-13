@@ -413,12 +413,6 @@ bool ReshapeFusion::Fuse_Subgraph(Node& reshape, Graph& graph, const logging::Lo
   shape_initializer_proto.set_name(shape_def->Name());
   shape_initializer_proto.add_dims(static_cast<int64_t>(shape_value.size()));
   shape_initializer_proto.set_data_type(ONNX_NAMESPACE::TensorProto_DataType_INT64);
-  std::cout<<"shape_value"<<std::endl;
-  for( long unsigned int i=0; i<shape_value.size(); i++ )
-  {
-    std::cout << shape_value[i] << " " ;
-  } 
-  std::cout<<std::endl;
 
   char* bytes = (char*)shape_value.data();
   /*onnx is little endian serialized always-tweak byte order if needed*/

@@ -65,53 +65,6 @@ static std::vector<int32_t> DataInt32(api::TensorRef& tensor) {
 static std::string_view AddInitializerInt64(api::GraphRef& graph, const std::vector<int64_t>& shape,
                                      const std::vector<int64_t>& values) {
   const uint8_t* raw_data = reinterpret_cast<const uint8_t*>(values.data());
-
-#if 0
-  char* bytes = (char*)raw_data;
-  /*onnx is little endian serialized always-tweak byte order if needed*/
-  if (1) {
-     std::cout<<"Doing byte swapping in AddInitializerInt64"<<"element_size "<<sizeof(int64_t)<<"num_elements "<<values.size()<<std::endl;
-     const size_t element_size = sizeof(int64_t);
-     const size_t num_elements = values.size();
-
-     int i;
-     int j;
-     std::cout<<"Before Swap:"<<std::endl;
-     char *srcbytes = (char *)raw_data;
-     for(i=0; i<(int)num_elements; i++)
-     {
-        for(j=0; j<(int)element_size; j++)
-        {
-           std::cout<<std::hex<<(int)*(srcbytes+(i*element_size)+j)<<" ";
-        }
-        std::cout<<std::endl;
-     }
-
-     for (size_t i = 0; i < num_elements; ++i) {
-         char* start_byte = bytes + i * element_size;
-         char* end_byte = start_byte + element_size - 1;
-         /* keep swapping */
-         for (size_t count = 0; count < element_size / 2; ++count) {
-             char temp = *start_byte;
-             *start_byte = *end_byte;
-             *end_byte = temp;
-             ++start_byte;
-             --end_byte;
-         }
-      }
-      std::cout<<"After Swap:"<<std::endl;
-      srcbytes = (char *)raw_data;
-      for(i=0; i<(int)num_elements; i++)
-      { 
-         for(j=0; j<(int)element_size; j++)
-         {   
-            std::cout<<std::hex<<(int)*(srcbytes+(i*element_size)+j)<<" ";
-         }
-         std::cout<<std::endl;
-      }
-
-  }
-#endif
   std::vector<uint8_t> data(raw_data, raw_data + values.size() * sizeof(int64_t));
   return graph.AddInitializer(api::DataType::INT64, shape, data);
 }
@@ -119,53 +72,6 @@ static std::string_view AddInitializerInt64(api::GraphRef& graph, const std::vec
 static std::string_view AddInitializerInt32(api::GraphRef& graph, const std::vector<int64_t>& shape,
                                      const std::vector<int32_t>& values) {
   const uint8_t* raw_data = reinterpret_cast<const uint8_t*>(values.data());
-
-#if 0
-  char* bytes = (char*)raw_data;
-  /*onnx is little endian serialized always-tweak byte order if needed*/
-  if (1) {
-     std::cout<<"Doing byte swapping in AddInitializerInt32"<<std::endl;
-     const size_t element_size = sizeof(int32_t);
-     const size_t num_elements = values.size();
-     int i;
-     int j; 
-     std::cout<<"Before Swap:"<<std::endl;
-     char *srcbytes = (char *)raw_data;
-     for(i=0; i<(int)num_elements; i++)
-     {  
-        for(j=0; j<(int)element_size; j++)
-        {  
-           std::cout<<std::hex<<(int)*(srcbytes+(i*element_size)+j)<<" ";
-        }
-        std::cout<<std::endl;
-     }
-
-     for (size_t i = 0; i < num_elements; ++i) {
-         char* start_byte = bytes + i * element_size;
-         char* end_byte = start_byte + element_size - 1;
-         /* keep swapping */
-         for (size_t count = 0; count < element_size / 2; ++count) {
-             char temp = *start_byte;
-             *start_byte = *end_byte;
-             *end_byte = temp;
-             ++start_byte;
-             --end_byte;
-         }
-      }
-     std::cout<<"After Swap:"<<std::endl;
-     srcbytes = (char *)raw_data;
-     for(i=0; i<(int)num_elements; i++)
-     {
-        for(j=0; j<(int)element_size; j++)
-        {
-            std::cout<<std::hex<<(int)*(srcbytes+(i*element_size)+j)<<" ";
-        }
-         std::cout<<std::endl;
-     }
-
-  }
-#endif
-
   std::vector<uint8_t> data(raw_data, raw_data + values.size() * sizeof(int32_t));
   return graph.AddInitializer(api::DataType::INT32, shape, data);
 }
@@ -397,10 +303,6 @@ static std::vector<int64_t> UnsqueezePerm(const std::vector<int64_t>& axes, cons
 // Result has size perm.size() - axes.size() and reorders remaining axes according to perm.
 static std::vector<int64_t> SqueezePerm(const std::vector<int64_t>& axes, const std::vector<int64_t>& perm) {
 
-  std::cout << "Printing axes"<<std::endl;
-  for (auto i: axes)
-    std::cout << i << ' ';
-   
   // Determine removed axes
   std::vector<bool> is_removed_axis(perm.size());
   for (int64_t a : axes) {
@@ -1013,9 +915,6 @@ void PermuteInput(api::GraphRef& graph, api::NodeRef& node, size_t i, const std:
       std::vector<uint8_t> new_data(data.size());
      std::vector<uint8_t> data1 = data;
 
-      std::cout<<"data "<<data.data()<<std::endl;
-    //std::cout<<"data1 "<<data1.data()<<std::endl;
-
       size_t bytes_per_val = data.size() / rank;
 
       char* bytes = (char*) data1.data();
@@ -1235,9 +1134,7 @@ static bool HandleReduceSum(HandlerArgs& args) {
   if (keepdims) {
     TransposeOutputs(args.ctx, args.node, args.perm);
   } else {
-    std::cout<<"Before SqueezePerm"<<std::endl; 
     std::vector<int64_t> new_perm = SqueezePerm(new_axes, args.perm);
-    std::cout<<"After SqueezePerm"<<std::endl;
     TransposeOutputs(args.ctx, args.node, new_perm);
   }
 
@@ -1443,28 +1340,21 @@ static bool HandleSlice(HandlerArgs& args) {
   } else {
     // Case 2: Axes input provided. Update if constant.
     std::string_view axes_inp = inputs[3];
-    std::cout<<"Before calling graph.GetConstant"<<std::endl;
     std::unique_ptr<api::TensorRef> axes_const = args.ctx.graph.GetConstant(axes_inp);
-    std::cout<<"After calling graph.GetConstant"<<std::endl;
     if (axes_const == nullptr) {
       return false;
     }
 
     api::DataType int_dtype = axes_const->DType();
-    std::cout<<"Before calling TensorIntData"<<std::endl;
     auto axes = TensorIntData(*axes_const, int_dtype);
-    std::cout<<"After calling TensorIntData"<<std::endl;
     if (!NormalizeAndValidateAxes(axes, rank)) {
-      std::cout<<"Returning"<<std::endl;
       return false;
     }
 
     // Update axes but leave the order unchanged (don't sort them). Need to line up with starts/ends/steps
     new_axes = AxesForTransposedInput(axes, args.perm);
     std::vector<int64_t> axes_shape{gsl::narrow_cast<int64_t>(new_axes.size())};
-    std::cout<<"Before calling AddIntInitializerMatchingDtype "<<std::endl;  
     std::string_view new_axes_const = AddIntInitializerMatchingDtype(args.ctx.graph, new_axes, int_dtype);
-    std::cout<<"After calling AddIntInitializerMatchingDtype "<<std::endl;
     args.node.SetInput(3, new_axes_const);
     if (!args.ctx.graph.HasValueConsumers(axes_inp)) {
       args.ctx.graph.RemoveInitializer(axes_inp);

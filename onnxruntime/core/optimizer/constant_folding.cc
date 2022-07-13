@@ -157,7 +157,7 @@ Status ConstantFolding::ApplyImpl(Graph& graph, bool& modified, int graph_level,
         continue;
       }
 
-      std::cout<<"DEBUG Debugging constant node folding transformation1"<<std::endl;
+      // std::cout<<"DEBUG Debugging constant node folding transformation1"<<std::endl;
       // Check if constant folding can be applied on this node.
       if (!graph_utils::IsSupportedProvider(*node, GetCompatibleExecutionProviders()) ||
           !optimizer_utils::IsOperationDeterministic(node->Domain(), node->OpType()) ||
@@ -167,7 +167,7 @@ Status ConstantFolding::ApplyImpl(Graph& graph, bool& modified, int graph_level,
           node->ContainsSubgraph() || !graph_utils::AllNodeInputsAreConstant(graph, *node, constant_inputs, excluded_initializers_)) {
         continue;
       }
-      std::cout<<"DEBUG Debugging constant node folding transformation2"<<std::endl;
+      //std::cout<<"DEBUG Debugging constant node folding transformation2"<<std::endl;
 
 #if !defined(DISABLE_SPARSE_TENSORS)
       // Create execution frame for executing constant nodes.

@@ -123,15 +123,6 @@ std::vector<BFloat16> CreateValues<BFloat16>() {
 template <typename T>
 void WriteDataToFile(FILE* fp, const std::vector<T>& test_data) {
   char *bytes1 = (char *)test_data.data();
-  std::cout<<"raw data before conversion ";
-  for (int j=0; j<4; j++)
-  {
-    for(int k=0; k<sizeof(T); k++)
-    std::cout<<std::hex<<(int)bytes1[(j*sizeof(T))+k]<<" ";
-    std::cout<<std::endl;
-  }
-  std::cout<<std::endl;
-
   if (1) {
          std::cout<<"Doing byte swapping in WriteDataToFile tensorutils_test.cc"<<std::endl;
          const size_t element_size = sizeof(T);
@@ -150,14 +141,6 @@ void WriteDataToFile(FILE* fp, const std::vector<T>& test_data) {
          }
   }
   char *bytes = (char *)test_data.data();
-  std::cout<<"raw data after conversion ";
-  for (int j=0; j<4; j++)
-  {
-    for(int k=0; k<sizeof(T); k++)
-    std::cout<<std::hex<<(int)bytes[(j*sizeof(T))+k]<<" ";
-    std::cout<<std::endl;
-  }
-  std::cout<<std::endl;
   size_t size_in_bytes = test_data.size() * sizeof(T);
   ASSERT_EQ(size_in_bytes, fwrite(test_data.data(), 1, size_in_bytes, fp));
 }
@@ -224,7 +207,7 @@ void UnpackAndValidate(const TensorProto& tensor_proto, const Path& model_path, 
 
   // Validate data
   for (size_t i = 0; i < test_data.size(); i++) {
-    std::cout<<"val[i]"<<val[i]<<"test_data[i]"<<test_data[i]<<std::endl;
+    // std::cout<<"val[i]"<<val[i]<<"test_data[i]"<<test_data[i]<<std::endl;
     ASSERT_TRUE(val[i] == test_data[i]);  // need to use ASSERT_TRUE with '==' to handle MFLoat16 and BFloat16
   }
 }
@@ -257,19 +240,12 @@ void TestUnpackExternalTensor(TensorProto_DataType type, const Path& model_path)
 }  // namespace
 TEST(TensorProtoUtilsTest, UnpackTensorWithExternalData) {
   Path model_path;
-  std::cout<<"float "<<std::endl;
   TestUnpackExternalTensor<float>(TensorProto_DataType_FLOAT, model_path);
-  std::cout<<"Double"<<std::endl;
   TestUnpackExternalTensor<double>(TensorProto_DataType_DOUBLE, model_path);
-  std::cout<<"int32"<<std::endl;
   TestUnpackExternalTensor<int32_t>(TensorProto_DataType_INT32, model_path);
-  std::cout<<"int8"<<std::endl;
   TestUnpackExternalTensor<int8_t>(TensorProto_DataType_INT8, model_path);
-  std::cout<<"float16"<<std::endl;
   TestUnpackExternalTensor<MLFloat16>(TensorProto_DataType_FLOAT16, model_path);
-  std::cout<<"bloat16"<<std::endl;
   TestUnpackExternalTensor<BFloat16>(TensorProto_DataType_BFLOAT16, model_path);
-  std::cout<<"bool"<<std::endl;
   TestUnpackExternalTensor<bool>(TensorProto_DataType_BOOL, model_path);
 }
 

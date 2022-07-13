@@ -44,15 +44,7 @@ struct Inverse::ComputeImpl {
     Eigen::Map<const MatrixT<T>> input_matrix(input_data, rows, cols);
     Eigen::Map<MatrixT<T>> output_matrix(output_data, rows, cols);
     Eigen::MatrixX<T>  g = input_matrix;
-    std::cout<<"Before Calling Eigen library inverse()"<<std::endl;
-    std::cout<<input_matrix<<std::endl;
     output_matrix = input_matrix.inverse();
-    std::cout<<output_matrix<<std::endl;
-
-    std::cout<<"Before calling inverse on g"<<std::endl;
-    std::cout<<g<<std::endl;
-    std::cout<<"Inverse on g"<<std::endl;
-    std::cout<<g.inverse()<<std::endl;
   }
 };
 
@@ -67,7 +59,6 @@ struct Inverse::ComputeImpl<MLFloat16> {
 
     Eigen::Map<const MatrixT<Eigen::half>> input_matrix(input_data, rows, cols);
     Eigen::Map<MatrixT<Eigen::half>> output_matrix(output_data, rows, cols);
-    std::cout<<"Before Calling Eigen library inverse() from MLFloat16"<<std::endl;
     output_matrix = input_matrix.inverse();
   }
 };

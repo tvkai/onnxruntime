@@ -87,17 +87,20 @@ static bool GetSliceInfo(const Graph& graph,
       if (initializer->data_type() == ONNX_NAMESPACE::TensorProto::INT32) {
         int32_t* init_data = init.data<int32_t>();
         std::vector<int64_t> ma(init_data, init_data + init.size());
+#if 0
         for (auto aa: ma)  {
-            
             std::cout << "int32 val=" << aa << std::endl;
         }
+#endif
         return std::vector<int64_t>(init_data, init_data + init.size());
       } else if (initializer->data_type() == ONNX_NAMESPACE::TensorProto::INT64) {
         int64_t* init_data = init.data<int64_t>();
         std::vector<int64_t> ma(init_data, init_data + init.size());
+#if 0
         for (auto aa: ma)  {
             std::cout << "int32 val=" << aa << std::endl;
         }
+#endif
         return std::vector<int64_t>(init_data, init_data + init.size());
       }
       return {};

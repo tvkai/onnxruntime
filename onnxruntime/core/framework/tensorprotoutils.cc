@@ -104,7 +104,7 @@ static Status UnpackTensorWithRawDataImpl(const void* raw_data, size_t raw_data_
                            expected_size_in_bytes, ", got ", dst.size_bytes());
   }
 
-  std::cout<<"Invoking ReadLittleEndian() UnpackTensorWithRawDataImpl "<<std::endl;
+  // std::cout<<"Invoking ReadLittleEndian() UnpackTensorWithRawDataImpl "<<std::endl;
   // ReadLittleEndian checks src and dst buffers are the same size
   return onnxruntime::utils::ReadLittleEndian(element_size, src, dst);
 }
@@ -793,7 +793,7 @@ ONNX_NAMESPACE::TensorProto TensorToTensorProto(const Tensor& tensor, const std:
     }
   } else {
 
-    std::cout<<"In TensorToTensorProto before set_raw_data ( Doing Byte Swapping ) tensorprotoutils.cc"<<std::endl;
+    // std::cout<<"In TensorToTensorProto before set_raw_data ( Doing Byte Swapping ) tensorprotoutils.cc"<<std::endl;
     char* bytes = (char*)tensor.DataRaw();
     /*onnx is little endian serialized always-tweak byte order if needed*/
     if (1) {
@@ -1214,7 +1214,7 @@ static void SparsifyGeneric(const void* dense_raw_data, size_t n_dense_elements,
   /* Convert indices to Little endian as expected by UnpackTensorWithRawDataImpl */
   if(1)
   {
-      std::cout<<"Doing byte swapping for little endian tensorprotoutils.cc" << std::endl;
+      // std::cout<<"Doing byte swapping for little endian tensorprotoutils.cc" << std::endl;
       size_t num_elements = indices.raw_data().size() / elem_sz;
 
       for (size_t i = 0; i < num_elements; ++i) {

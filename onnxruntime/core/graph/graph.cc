@@ -1141,7 +1141,7 @@ Graph::Graph(const Model& owning_model,
             // sparse value does not have raw data, hence values will be in native endian. 
             // Dense tensor values in raw data and hence expected to be in Little endian. 
             // So change the endianness in Big endian system. 
-            std::cout << "Doing byte swapping for attribute of Constatnt node in graph.cc" << std::endl;
+            // std::cout << "Doing byte swapping for attribute of Constatnt node in graph.cc" << std::endl;
             size_t element_size=1;
             switch(tensor->data_type())
             {
@@ -3188,7 +3188,7 @@ void ConvTens(TensorProto* tensp)
             /* ORT is little endian serialized always-tweak byte order if needed*/
             if (1)
             {
-                std::cout<<"Doing byte swapping for little endian ORT graph.cc" << std::endl;
+                // std::cout<<"Doing byte swapping for little endian ORT graph.cc" << std::endl;
                 const size_t element_size = sizeof(float);
                 size_t num_elements;
                 if (tensp->has_raw_data())
@@ -3233,7 +3233,7 @@ void ConvTens(TensorProto* tensp)
             /* ORT is little endian serialized always-tweak byte order if needed*/
             if (1)
             {
-                std::cout<<"Doing byte swapping for little endian ORT graph.cc" << std::endl;
+                // std::cout<<"Doing byte swapping for little endian ORT graph.cc" << std::endl;
                 const size_t element_size = sizeof(int64);
                 size_t num_elements;
                 if (tensp->has_raw_data())

@@ -178,13 +178,6 @@ void Gemv(CBLAS_TRANSPOSE TransA,
       return;
     }
     case CblasTrans: {
-      std::cout<<"Printing ConstEigenMatrixMap<T>(A, N, M)"<<std::endl;
-      std::cout<<ConstEigenMatrixMap<T>(A, N, M)<<std::endl;
-      std::cout<<"Printing ConstEigenVectorMap"<<std::endl;
-      std::cout<<ConstEigenVectorMap<T>(x, M)<<std::endl;
-      std::cout<<"Printing op"<<std::endl;
-      std::cout<<(ConstEigenMatrixMap<T>(A, N, M) * ConstEigenMatrixMap<T>(x, M, 1))<<std::endl;
-
       y_vec.noalias() += alpha * (ConstEigenMatrixMap<T>(A, N, M) *
                                   ConstEigenMatrixMap<T>(x, M, 1));
       return;
@@ -833,8 +826,6 @@ float halfToFloat(uint16_t h) {
 #define DELEGATE_BROADCAST_BINARY_FUNCTION(T, Funcname, expr)                                                    \
   template <>                                                                                                    \
   void Funcname##ToRow<T, CPUMathUtil>(int M, int N, const T* a, const T* b, T* y, CPUMathUtil*) {               \
-    std::cout<<"Printing ConstEigenArrayMap"<<std::endl;                                                         \
-    std::cout<<ConstEigenArrayMap<T>(a, N, M)<<std::endl;                                                        \
     EigenArrayMap<T>(y, N, M) = ConstEigenArrayMap<T>(a, N, M).colwise() expr ConstEigenVectorArrayMap<T>(b, N); \
   }                                                                                                              \
   /* inplace versions */                                                                                         \

@@ -119,22 +119,6 @@ static NodeArg& MergeQkvWeights(Graph& graph, int64_t hidden_size,
     const float* q_weight = q_initializer.data<float>();
     const float* k_weight = k_initializer.data<float>();
     const float* v_weight = v_initializer.data<float>();
-    char *bytes = (char *)q_weight;
-    unsigned long int i;
-    for(i=0;i<sizeof(float);i++)
-    {
-      std::cout<<std::hex<<(int)*(bytes+i)<<std::endl;
-    }
-    bytes = (char *)k_weight;
-    for(i=0;i<sizeof(float);i++)
-    {
-       std::cout<<std::hex<<(int)*(bytes+i)<<std::endl;
-    } 
-    bytes = (char *)v_weight;
-    for(i=0;i<sizeof(float);i++)
-    {
-       std::cout<<std::hex<<(int)*(bytes+i)<<std::endl;
-    } 
     std::vector<float> result;
     result.reserve(gsl::narrow<size_t>(element_count));
     if (is_matmul) {

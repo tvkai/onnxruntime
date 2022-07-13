@@ -79,9 +79,6 @@ struct FunctionTestCase {
 
     std::vector<int64_t> shapeforrandom;
     shapeforrandom = shape;
-    std::cout<<"shape"<<shape<<std::endl;
-    std::cout<<"shapeforrandom"<<shapeforrandom<<std::endl;
- 
     char *bytes1 = (char *)shape.data();
     if (1) {
          std::cout<<"Doing byte swapping in AddInput test/contrib_ops/function_test_util.h "<<std::endl;
@@ -102,7 +99,6 @@ struct FunctionTestCase {
          }
     }
 
-    std::cout<<"shape"<<shape<<std::endl;
     auto arg_type = TensorType(data_types_internal::ToTensorDataType<T>(), shape);
     input_args.emplace_back(input_name, &arg_type);
 

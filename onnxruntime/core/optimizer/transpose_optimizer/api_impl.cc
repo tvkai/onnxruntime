@@ -262,27 +262,6 @@ std::vector<uint8_t> ApiTensor::Data() const {
 
   size_t num_bytes = gsl::narrow_cast<size_t>(tensor->SizeInBytes());
   const uint8_t* data = static_cast<const uint8_t*>(tensor->DataRaw());
-#if 0
-  char* bytes = (char*)tensor->DataRaw();
-  if (1) {
-         std::cout<<"Doing byte swapping in ApiTensor::Data api_impl.cc"<<std::endl;
-         const size_t element_size = tensor->DataType()->Size();
-         const size_t num_elements = (tensor->SizeInBytes())/(tensor->DataType()->Size());
-         for (size_t i = 0; i < num_elements; ++i) {
-             char* start_byte = bytes + i * element_size;
-             char* end_byte = start_byte + element_size - 1;
-             /* keep swapping */
-             for (size_t count = 0; count < element_size / 2; ++count) {
-                  char temp = *start_byte;
-                  *start_byte = *end_byte;
-                  *end_byte = temp;
-                  ++start_byte;
-                  --end_byte;
-             }
-         }
-  }
-#endif
-
   return std::vector<uint8_t>(data, data + num_bytes);
 }
 // </ApiTensor>
@@ -715,18 +694,6 @@ std::string_view ApiGraph::AddInitializer(api::DataType dtype, const std::vector
                              break;   
          }
          const size_t num_elements = data.size()/element_size;
-         std::cout<<"Source:"<<std::endl;
-         int i = 0;
-         int j = 0;
-         for(i=0; i<(int)num_elements; i++)
-         {
-            for(j=0; j<(int)element_size; j++)
-            {
-               std::cout<<std::hex<<(int)*(bytes+(i*element_size)+j)<<" ";
-            }
-            std::cout<<std::endl;
-         }
-          
          for (size_t i = 0; i < num_elements; ++i) {
              char* start_byte = bytes + i * element_size;
              char* end_byte = start_byte + element_size - 1;
@@ -739,17 +706,6 @@ std::string_view ApiGraph::AddInitializer(api::DataType dtype, const std::vector
                   --end_byte;
              }
          }
-         
-        std::cout<<"Destination:"<<std::endl;
-        for(i=0; i<(int)num_elements; i++)
-        {  
-           for(j=0; j<(int)element_size; j++)
-           {   
-               std::cout<<std::hex<<(int)*(bytes+(i*element_size)+j)<<" ";
-           }
-           std::cout<<std::endl;
-        }
-
   }
   tensor_proto.set_raw_data(data.data(), data.size());
   for (int64_t dim : shape) {

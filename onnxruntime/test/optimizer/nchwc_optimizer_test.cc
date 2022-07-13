@@ -62,7 +62,6 @@ struct NchwcTestHelper {
     tensor_proto.set_name(name);
     tensor_proto.set_data_type(utils::ToTensorProtoElementType<T>());
 
-    std::cout<<"Byte Swapping in MakeInitializer "<<std::endl;
     char* bytes = (char*)data.data();
     /*onnx is little endian serialized always-tweak byte order if needed*/
     if (1) {
