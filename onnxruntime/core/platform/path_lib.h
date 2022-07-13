@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <stdexcept>
 #include <sys/stat.h>
+#include <iostream>
 #ifdef _WIN32
 #include <Windows.h>
 #include <time.h>  //strftime
@@ -244,7 +245,7 @@ inline OrtFileType DTToFileType(unsigned char t) {
   }
 }*/
 inline OrtFileType DTToFileTypeAIX(struct stat st) {
-    switch (st.st_mode) {
+    switch (st.st_mode & _S_IFMT) {
 	case S_IFBLK:
 		return OrtFileType::TYPE_BLK;
 	case S_IFCHR:
@@ -287,7 +288,8 @@ void LoopDir(const std::string& dir_name, T func) {
   ORT_TRY {
     struct dirent* dp;
     while ((dp = readdir(dir)) != nullptr) {
-	if (stat(dp->d_name, &stats) != 0) {
+    std::basic_string<PATH_CHAR_TYPE> filename  = ConcatPathComponent<PATH_CHAR_TYPE>(dir_name, dp->d_name);
+	if (stat(filename.c_str(), &stats) != 0) {
 		continue;
 	}	
       if (!func(dp->d_name, DTToFileTypeAIX(stats))) {
