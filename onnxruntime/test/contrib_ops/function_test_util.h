@@ -81,10 +81,11 @@ struct FunctionTestCase {
     shapeforrandom = shape;
     char *bytes1 = (char *)shape.data();
     if (1) {
+#ifdef DEBUG_AIX
          std::cout<<"Doing byte swapping in AddInput test/contrib_ops/function_test_util.h "<<std::endl;
+#endif
          const size_t element_size = sizeof(T);
          const size_t num_elements = shape.size()/element_size;
-         std::cout<<"num_elements"<<num_elements<<std::endl;
          for (size_t i = 0; i < num_elements; ++i) {
              char* start_byte = bytes1 + i * element_size;
              char* end_byte = start_byte + element_size - 1;

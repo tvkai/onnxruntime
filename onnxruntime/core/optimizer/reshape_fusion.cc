@@ -417,7 +417,9 @@ bool ReshapeFusion::Fuse_Subgraph(Node& reshape, Graph& graph, const logging::Lo
   char* bytes = (char*)shape_value.data();
   /*onnx is little endian serialized always-tweak byte order if needed*/
   if (1) {
+#ifdef DEBUG_AIX
      std::cout<<"DEBUG Doing byte swapping in reshape fusion"<<std::endl;
+#endif
      const size_t element_size = sizeof(int64_t);
      const size_t num_elements = shape_value.size();
      for (size_t i = 0; i < num_elements; ++i) {

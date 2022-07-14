@@ -93,7 +93,9 @@ class ModelTestBuilder {
         const size_t element_size = sizeof(T);
         const size_t num_elements = data.size();
 
+#ifdef DEBUG_AIX
         std::cout<<"Doing byte swapping in MakeInitializer graph_transform_test_builder.h "<<"num_elements "<<num_elements<<"element_size "<<element_size<<std::endl;
+#endif
          for (size_t i = 0; i < num_elements; ++i) {
              char* start_byte = bytes + i * element_size;
              char* end_byte = start_byte + element_size - 1;

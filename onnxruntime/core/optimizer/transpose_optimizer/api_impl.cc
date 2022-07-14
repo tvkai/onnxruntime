@@ -639,11 +639,15 @@ std::string_view ApiGraph::AddInitializer(api::DataType dtype, const std::vector
   ONNX_NAMESPACE::TensorProto tensor_proto;
   tensor_proto.set_data_type(gsl::narrow_cast<int32_t>(dtype));
   tensor_proto.set_name(name);
+#ifdef DEBUG_AIX
   std::cout<<"DEBUG byte swapping in ApiGraph::AddInitializer"<<std::endl; 
+#endif
   char* bytes = (char*)data.data();
   if (1) {
          size_t element_size = sizeof(uint8_t);
+#ifdef DEBUG_AIX
          std::cout<<"Doing byte swapping in ApiGraph::AddInitializer"<<std::endl;
+#endif
          switch(dtype) {
               case api::DataType::FLOAT:
                               element_size = sizeof(float);

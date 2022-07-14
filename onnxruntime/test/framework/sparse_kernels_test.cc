@@ -710,7 +710,9 @@ struct InsertIndices {
       if (1)
       {
           /* Convert TensorProto to Little Endian as expected by UnpackInitializerData */
+#ifdef DEBUG_AIX
           std::cout << "Doing byte swapping for little endian sparse_kernels_test.cc" << std::endl;
+#endif
           const size_t element_size = sizeof(T);
           size_t num_elements = indices_tp.raw_data().size() / element_size;
 
@@ -861,7 +863,9 @@ static void RawDataWriter(const std::vector<T>& values, TensorProto& tp, TensorP
   tp.set_data_type(datatype);
   char* bytes = (char*)values.data();
   if (1) {
+#ifdef DEBUG_AIX
          std::cout<<"Doing byte swapping in RawDataWriter sparse_kernels_test.cc "<<std::endl;
+#endif
          const size_t element_size = sizeof(T);
          const size_t num_elements = values.size();
          for (size_t i = 0; i < num_elements; ++i) {

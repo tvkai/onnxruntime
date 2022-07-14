@@ -79,7 +79,9 @@ class Initializer final {
 
     if (tensor_proto.data_location() != ONNX_NAMESPACE::TensorProto_DataLocation_EXTERNAL) {
       if (utils::HasRawData(tensor_proto)) {
+#ifdef DEBUG_AIX
         std::cout<<"New change in Initializer.h"<<std::endl;
+#endif
         auto status = onnxruntime::utils::UnpackInitializerData(tensor_proto, temp_raw_data_); 
         raw_data_.assign(temp_raw_data_.begin(), temp_raw_data_.end());
 #if 0
@@ -201,7 +203,9 @@ class Initializer final {
       }  
      
    
+#ifdef DEBUG_AIX
      std::cout<<"Hit ToProto byteswap"<<std::endl;
+#endif
      temp_raw_data_.assign(raw_data_.begin(), raw_data_.end());
      char *bytes = (char *)&temp_raw_data_;
      const size_t num_elements = size_;

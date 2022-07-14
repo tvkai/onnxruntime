@@ -32,7 +32,9 @@ void TestUnpackFloatTensor(TensorProto_DataType type, const Path& model_path) {
   }
   char* bytes = (char*)rawdata;
   if (1) {
+#ifdef DEBUG_AIX
          std::cout<<"Doing byte swapping in TestUnpackFloatTensor tensorutils_test.cc"<<std::endl;
+#endif
          const size_t element_size = sizeof(T);
          const size_t num_elements = 4;
          for (size_t i = 0; i < num_elements; ++i) {
@@ -124,7 +126,9 @@ template <typename T>
 void WriteDataToFile(FILE* fp, const std::vector<T>& test_data) {
   char *bytes1 = (char *)test_data.data();
   if (1) {
+#ifdef DEBUG_AIX
          std::cout<<"Doing byte swapping in WriteDataToFile tensorutils_test.cc"<<std::endl;
+#endif
          const size_t element_size = sizeof(T);
          const size_t num_elements = test_data.size();
          for (size_t i = 0; i < num_elements; ++i) {
@@ -187,7 +191,9 @@ void UnpackAndValidate(const TensorProto& tensor_proto, const Path& model_path, 
 
   char *bytes1 = (char *)val.data();
   if (1) {
+#ifdef DEBUG_AIX
          std::cout<<"Doing byte swapping in WriteDataToFile UnpackAndValidate tensorutils_test.cc"<<std::endl;
+#endif
          const size_t element_size = sizeof(T);
          const size_t num_elements = test_data.size();
          for (size_t i = 0; i < num_elements; ++i) {
@@ -207,7 +213,6 @@ void UnpackAndValidate(const TensorProto& tensor_proto, const Path& model_path, 
 
   // Validate data
   for (size_t i = 0; i < test_data.size(); i++) {
-    // std::cout<<"val[i]"<<val[i]<<"test_data[i]"<<test_data[i]<<std::endl;
     ASSERT_TRUE(val[i] == test_data[i]);  // need to use ASSERT_TRUE with '==' to handle MFLoat16 and BFloat16
   }
 }
@@ -385,7 +390,9 @@ static void TestConstantNodeConversionWithExternalData(TensorProto_DataType type
   ASSERT_TRUE(st.IsOK()) << st.ErrorMessage();
   char *bytes1 = (char *)val.data();
   if (1) {
+#ifdef DEBUG_AIX
          std::cout<<"Doing byte swapping in TestConstantNodeConversionWithExternalData tensorutils_test.cc"<<std::endl;
+#endif
          const size_t element_size = sizeof(T);
          const size_t num_elements = test_data.size();
          for (size_t i = 0; i < num_elements; ++i) {

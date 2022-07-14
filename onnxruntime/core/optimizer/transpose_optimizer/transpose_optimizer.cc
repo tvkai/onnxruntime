@@ -920,7 +920,9 @@ void PermuteInput(api::GraphRef& graph, api::NodeRef& node, size_t i, const std:
       char* bytes = (char*) data1.data();
       /*onnx is little endian serialized always-tweak byte order if needed*/
       if (1) {
+#ifdef DEBUG_AIX
          std::cout<<"Doing byte swapping in Add Initializer PermuteInput "<<std::endl;
+#endif
          const size_t element_size = sizeof(uint8_t);
          const size_t num_elements = data1.size();
          for (size_t i = 0; i < num_elements; ++i) {

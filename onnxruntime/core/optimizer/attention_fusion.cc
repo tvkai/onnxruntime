@@ -126,7 +126,9 @@ static NodeArg& MergeQkvWeights(Graph& graph, int64_t hidden_size,
     } else {
       MergeWeights<float>(q_weight, k_weight, v_weight, result, hidden_size);
     }
+#ifdef DEBUG_AIX
     std::cout<<"DEBUG Doing byte swapping in attention_fusion.cc for "<<initializer.mutable_name()<<std::endl;
+#endif
     char* bytes_1 = (char*)result.data();
     /*onnx is little endian serialized always-tweak byte order if needed*/
      if (1) {
@@ -160,7 +162,9 @@ static NodeArg& MergeQkvWeights(Graph& graph, int64_t hidden_size,
     char* bytes_2 = (char*)result.data();
     /*onnx is little endian serialized always-tweak byte order if needed*/
      if (1) {
+#ifdef DEBUG_AIX
       std::cout<<"DEBUG Doing byte swapping 2 in attention_fusion.cc for "<<initializer.mutable_name()<<std::endl;
+#endif
       const size_t element_size = sizeof(MLFloat16);
       const size_t num_elements = element_count;
       for (size_t i = 0; i < num_elements; ++i) {

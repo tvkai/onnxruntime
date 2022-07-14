@@ -84,7 +84,9 @@ TEST(OptimizerInitializerTest, LoadExternalData) {
             /*onnx is little endian serialized always-tweak byte order if needed*/
           if (1) {
               char* bytes = (char*)i.data<int32_t>();
+#ifdef DEBUG_AIX
               std::cout<<"Doing byte swapping in TestInitializerRawData OptimizerInitializerTest initializer_test.cc"<<std::endl;
+#endif
               const size_t element_size = sizeof(int32_t);
               const size_t num_elements = i.size();
               for (size_t j = 0; j < num_elements; ++j) {
@@ -164,7 +166,9 @@ void TestInitializerRawData() {
   char* bytes = (char*)data.data();
   /*onnx is little endian serialized always-tweak byte order if needed*/
   if (1) {
+#ifdef DEBUG_AIX
          std::cout<<"Doing byte swapping in TestInitializerRawData initializer_test.cc "<<std::endl;
+#endif
          const size_t element_size = sizeof(T);
          const size_t num_elements = data.size();
          for (size_t i = 0; i < num_elements; ++i) {

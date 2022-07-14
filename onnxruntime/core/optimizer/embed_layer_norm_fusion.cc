@@ -466,7 +466,9 @@ static NodeArg* ExtractEmbedding(Graph& graph,
    char* bytes = (char*)data;
    /*onnx is little endian serialized always-tweak byte order if needed*/
    if (1) {
+#ifdef DEBUG_AIX
      std::cout<<"DEBUG Doing byte swapping in EmbedNormalFusion"<<std::endl;
+#endif
      const size_t element_size = sizeof(float);
      const size_t num_elements = element_count;
      for (size_t i = 0; i < num_elements; ++i) {
@@ -491,7 +493,9 @@ static NodeArg* ExtractEmbedding(Graph& graph,
     char* bytes_1 = (char*)data;
     /*onnx is little endian serialized always-tweak byte order if needed*/
     if (1) {
+#ifdef DEBUG_AIX
        std::cout<<"DEBUG Doing byte swapping in EmbedNormalFusion"<<std::endl;
+#endif
        const size_t element_size = sizeof(MLFloat16);
        const size_t num_elements = element_count;
        for (size_t i = 0; i < num_elements; ++i) {

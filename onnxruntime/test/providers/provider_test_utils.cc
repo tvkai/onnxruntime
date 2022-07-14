@@ -700,7 +700,9 @@ void OpTester::AddInitializers(onnxruntime::Graph& graph) {
       char* bytes = (char*)tensor.DataRaw();
       /*onnx is little endian serialized always-tweak byte order if needed*/
       if (1) {
+#ifdef DEBUG_AIX
          std::cout<<"Doing byte swapping in Add Initializer provider_test_utils.cc"<<std::endl;
+#endif
          const size_t element_size = tensor.DataType()->Size();
          const size_t num_elements = shape.Size();
          for (size_t i = 0; i < num_elements; ++i) {
@@ -720,7 +722,9 @@ void OpTester::AddInitializers(onnxruntime::Graph& graph) {
       /* After copy restore it back */
       /*onnx is little endian serialized always-tweak byte order if needed*/
       if (1) {
+#ifdef DEBUG_AIX
          std::cout<<"Doing byte swapping in Add Initializer provider_test_utils.cc"<<std::endl;
+#endif
          const size_t element_size = tensor.DataType()->Size();
          const size_t num_elements = shape.Size();
          for (size_t i = 0; i < num_elements; ++i) {
