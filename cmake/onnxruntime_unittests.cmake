@@ -701,6 +701,12 @@ if (MSVC)
 else()
   target_compile_options(onnxruntime_test_all PRIVATE "-Wno-parentheses")
 endif()
+target_link_options(onnxruntime_test_all PRIVATE "-Wl,-bkeepfile:${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/onnxruntime_test_all.dir${TEST_SRC_DIR}/common/logging/logging_test.cc.o")
+target_link_options(onnxruntime_test_all PRIVATE "-Wl,-bkeepfile:${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/onnxruntime_test_all.dir${TEST_SRC_DIR}/common/logging/sinks_test.cc.o")
+target_link_options(onnxruntime_test_all PRIVATE "-Wl,-bkeepfile:${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/onnxruntime_test_all.dir${TEST_SRC_DIR}/quantization/quantization_test.cc.o")
+target_link_options(onnxruntime_test_all PRIVATE "-Wl,-bkeepfile:${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/onnxruntime_test_all.dir${TEST_SRC_DIR}/framework/tensor_test.cc.o")
+target_link_options(onnxruntime_test_all PRIVATE "-Wl,-bkeepfile:${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/onnxruntime_test_all.dir${TEST_SRC_DIR}/framework/bfc_arena_test.cc.o")
+
 # the default logger tests conflict with the need to have an overall default logger
 # so skip in this type of
 target_compile_definitions(onnxruntime_test_all PUBLIC -DSKIP_DEFAULT_LOGGER_TESTS)
