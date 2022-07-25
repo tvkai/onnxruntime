@@ -80,27 +80,6 @@ TEST(OptimizerInitializerTest, LoadExternalData) {
 
         if (offset + length <= tensor_data_span.size()) {
           Initializer i(tensor_proto, tensor_data_dir_path);
-            /*onnx is little endian serialized always-tweak byte order if needed*/
-          if (1) {
-              char* bytes = (char*)i.data<int32_t>();
-#ifdef DEBUG_AIX
-              std::cout<<"Doing byte swapping in TestInitializerRawData OptimizerInitializerTest initializer_test.cc"<<std::endl;
-#endif
-              const size_t element_size = sizeof(int32_t);
-              const size_t num_elements = i.size();
-              for (size_t j = 0; j < num_elements; ++j) {
-                char* start_byte = bytes + j * element_size;
-                char* end_byte = start_byte + element_size - 1;
-                /* keep swapping */
-                for (size_t count = 0; count < element_size / 2; ++count) {
-                  char temp = *start_byte;
-                  *start_byte = *end_byte;
-                  *end_byte = temp;
-                  ++start_byte;
-                  --end_byte;
-                }
-             }
-          }
           EXPECT_EQ(gsl::make_span(i.data<int32_t>(), i.size()), tensor_data_span.subspan(offset, length));
         } else {
           EXPECT_THROW(Initializer i(tensor_proto, tensor_data_dir_path), OnnxRuntimeException);
