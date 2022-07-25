@@ -721,6 +721,78 @@ std::string_view ApiGraph::AddInitializer(api::DataType dtype, const std::vector
   ONNX_NAMESPACE::TensorProto tensor_proto;
   tensor_proto.set_data_type(gsl::narrow_cast<int32_t>(dtype));
   tensor_proto.set_name(name);
+#ifdef DEBUG_AIX
+  std::cout<<"DEBUG byte swapping in ApiGraph::AddInitializer"<<std::endl; 
+#endif
+  char* bytes = (char*)data.data();
+  if (1) {
+         size_t element_size = sizeof(uint8_t);
+#ifdef DEBUG_AIX
+         std::cout<<"Doing byte swapping in ApiGraph::AddInitializer"<<std::endl;
+#endif
+         switch(dtype) {
+              case api::DataType::FLOAT:
+                              element_size = sizeof(float);
+                              break;
+              case api::DataType::UINT8:
+                              element_size = sizeof(uint8_t);
+                              break;
+              case api::DataType::INT8:
+                              element_size = sizeof(int8_t);
+                              break;
+              case api::DataType::UINT16:
+                              element_size = sizeof(uint16_t);
+                              break;
+              case api::DataType::INT16:
+                              element_size = sizeof(int16_t);
+                              break;
+              case api::DataType::INT32:
+                              element_size = sizeof(int32_t);
+                              break;
+              case api::DataType::INT64:
+              case api::DataType::UINT64: 
+                              element_size = sizeof(int64_t);
+                              break;
+              case api::DataType::STRING:
+              case api::DataType::BOOL:
+                              element_size = sizeof(char);
+                              break;
+              case api::DataType::FLOAT16:
+                              element_size = sizeof(int16_t);
+                              break;
+              case api::DataType::DOUBLE:
+                              element_size = sizeof(double);
+                              break;
+              case api::DataType::UINT32:
+                              element_size = sizeof(uint32_t);
+                              break;
+              case api::DataType::COMPLEX64:
+                              element_size = 8;
+                              break;
+              case api::DataType::COMPLEX128:
+                             element_size = 16;
+                             break;
+              case api::DataType::BFLOAT16:
+                             element_size = 2;
+                             break;     
+              case api::DataType::UNDEFINED:
+                             element_size = 1;
+                             break;   
+         }
+         const size_t num_elements = data.size()/element_size;
+         for (size_t i = 0; i < num_elements; ++i) {
+             char* start_byte = bytes + i * element_size;
+             char* end_byte = start_byte + element_size - 1;
+             /* keep swapping */
+             for (size_t count = 0; count < element_size / 2; ++count) {
+                  char temp = *start_byte;
+                  *start_byte = *end_byte;
+                  *end_byte = temp;
+                  ++start_byte;
+                  --end_byte;
+             }
+         }
+  }
   tensor_proto.set_raw_data(data.data(), data.size());
   for (int64_t dim : shape) {
     tensor_proto.add_dims(dim);
