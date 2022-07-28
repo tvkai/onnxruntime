@@ -8,6 +8,7 @@ Check OS requirements for ONNX Runtime Python Bindings.
 import linecache
 import platform
 import warnings
+import subprocess
 
 
 def check_distro_info():
