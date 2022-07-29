@@ -31,7 +31,7 @@ ONNX_OPERATOR_KERNEL_EX(
     Inverse);
 
 template <typename T>
-using MatrixT = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
+using MatrixT = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
 template <typename T>
 struct Inverse::ComputeImpl {
