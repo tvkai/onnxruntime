@@ -14,10 +14,10 @@
 #include <Windows.h>
 #else
 #include <unistd.h>
-#if defined(__MACH__) || defined(__wasm__)
+#if defined(__MACH__) || defined(__wasm__) || defined(__AIX__)
 #include <pthread.h>
 #else
-//#include <sys/syscall.h>
+#include <sys/syscall.h>
 #endif
 #endif
 #include "core/platform/ort_mutex.h"
@@ -218,10 +218,10 @@ unsigned int GetThreadId() {
   long tid;
   thr_self(&tid);
   return static_cast<unsigned int>(tid);
-#elif defined(__wasm__)
+#elif defined(__wasm__) || defined(__AIX__)
   return static_cast<unsigned int>(pthread_self());
 #else
-  return static_cast<unsigned int>(thread_self());
+  return static_cast<unsigned int>(syscall(SYS_gettid));
 #endif
 }
 
@@ -231,10 +231,10 @@ unsigned int GetThreadId() {
 unsigned int GetProcessId() {
 #ifdef _WIN32
   return static_cast<unsigned int>(GetCurrentProcessId());
-#elif defined(__MACH__) || defined(__wasm__)
+#elif defined(__MACH__) || defined(__wasm__) || defined(__AIX__)
   return static_cast<unsigned int>(getpid());
 #else
-  return static_cast<unsigned int>(getpid());
+  return static_cast<unsigned int>(syscall(SYS_getpid));
 #endif
 }
 
