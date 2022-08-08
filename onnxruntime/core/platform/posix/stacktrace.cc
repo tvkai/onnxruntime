@@ -3,8 +3,8 @@
 
 #include "core/common/common.h"
 
-#if !defined(__ANDROID__) && !defined(__wasm__) && !defined(_OPSCHEMA_LIB_)
-//#include <execinfo.h>
+#if !defined(__ANDROID__) && !defined(__wasm__) && !defined(_OPSCHEMA_LIB_) && !defined(_AIX)
+#include <execinfo.h>
 #endif
 #include <vector>
 
