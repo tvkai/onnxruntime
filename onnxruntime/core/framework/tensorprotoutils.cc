@@ -798,9 +798,9 @@ ONNXTensorElementDataType GetTensorElementType(const ONNX_NAMESPACE::TensorProto
 
 ONNX_NAMESPACE::TensorProto TensorToTensorProto(const Tensor& tensor, const std::string& tensor_proto_name) {
   // Given we are using the raw_data field in the protobuf, this will work only for little-endian format.
-  if constexpr (endian::native != endian::little) {
-    ORT_THROW("Big endian not supported");
-  }
+  // if constexpr (endian::native != endian::little) {
+  //   ORT_THROW("Big endian not supported");
+  // }
 
   // Set name, dimensions, type, and data of the TensorProto.
   ONNX_NAMESPACE::TensorProto tensor_proto;
