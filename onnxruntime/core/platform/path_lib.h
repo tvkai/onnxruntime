@@ -7,8 +7,10 @@
 #include <sstream>
 #include <assert.h>
 #include <stdexcept>
+#if defined(_AIX)
 #include <sys/stat.h>
 #include <iostream>
+#endif
 #ifdef _WIN32
 #include <Windows.h>
 #include <time.h>  //strftime
@@ -171,7 +173,7 @@ std::basic_string<PATH_CHAR_TYPE> ConcatPathComponent(const std::basic_string<PA
   return ret;
 }
 
-#ifdef _WIN32
+#if defined(_WIN32)
 inline OrtFileType DTToFileType(DWORD dwFileAttributes) {
   if (dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
     return OrtFileType::TYPE_DIR;
@@ -222,28 +224,7 @@ inline std::basic_string<PATH_CHAR_TYPE> GetLastComponent(const std::basic_strin
   return input.substr(pos);
 }
 
-#else
-/*
-inline OrtFileType DTToFileType(unsigned char t) {
-  switch (t) {
-    case DT_BLK:
-      return OrtFileType::TYPE_BLK;
-    case DT_CHR:
-      return OrtFileType::TYPE_CHR;
-    case DT_DIR:
-      return OrtFileType::TYPE_DIR;
-    case DT_FIFO:
-      return OrtFileType::TYPE_FIFO;
-    case DT_LNK:
-      return OrtFileType::TYPE_LNK;
-    case DT_REG:
-      return OrtFileType::TYPE_REG;
-    case DT_SOCK:
-      return OrtFileType::TYPE_SOCK;
-    default:
-      return OrtFileType::TYPE_UNKNOWN;
-  }
-}*/
+#elif defined(_AIX)
 inline OrtFileType DTToFileTypeAIX(struct stat st) {
     switch (st.st_mode & _S_IFMT) {
 	case S_IFBLK:
@@ -293,6 +274,62 @@ void LoopDir(const std::string& dir_name, T func) {
 		continue;
 	}	
       if (!func(dp->d_name, DTToFileTypeAIX(stats))) {
+        break;
+      }
+    }
+  }
+  ORT_CATCH(const std::exception& ex) {
+    closedir(dir);
+    ORT_RETHROW;
+  }
+  closedir(dir);
+}
+#else
+inline OrtFileType DTToFileType(unsigned char t) {
+  switch (t) {
+    case DT_BLK:
+      return OrtFileType::TYPE_BLK;
+    case DT_CHR:
+      return OrtFileType::TYPE_CHR;
+    case DT_DIR:
+      return OrtFileType::TYPE_DIR;
+    case DT_FIFO:
+      return OrtFileType::TYPE_FIFO;
+    case DT_LNK:
+      return OrtFileType::TYPE_LNK;
+    case DT_REG:
+      return OrtFileType::TYPE_REG;
+    case DT_SOCK:
+      return OrtFileType::TYPE_SOCK;
+    default:
+      return OrtFileType::TYPE_UNKNOWN;
+  }
+}
+
+template <typename T>
+void LoopDir(const std::string& dir_name, T func) {
+  DIR* dir = opendir(dir_name.c_str());
+  if (dir == nullptr) {
+    auto e = errno;
+    char buf[1024];
+    char* msg;
+#if defined(__GLIBC__) && defined(_GNU_SOURCE) && !defined(__ANDROID__)
+    msg = strerror_r(e, buf, sizeof(buf));
+#else
+    if (strerror_r(e, buf, sizeof(buf)) != 0) {
+      buf[0] = '\0';
+    }
+    msg = buf;
+#endif
+    std::ostringstream oss;
+    oss << "couldn't open '" << dir_name << "':" << msg;
+    std::string s = oss.str();
+    ORT_THROW(s);
+  }
+  ORT_TRY {
+    struct dirent* dp;
+    while ((dp = readdir(dir)) != nullptr) {
+      if (!func(dp->d_name, DTToFileType(dp->d_type))) {
         break;
       }
     }
