@@ -162,7 +162,7 @@ struct CreateMelWeightMatrix {
     // Convert each point from mel scale back to hertz, and then compute the corresponding index in the fft
     for (size_t i = 0; i < frequency_bins.size(); i++) {
       auto hz1 = mel_scale_to_hz(low_frequency_mel + mel_step * i);
-      frequency_bins[i] = static_cast<size_t>(std::floor(((dft_length + 1) * hz) / sample_rate));
+      frequency_bins[i] = static_cast<size_t>(std::floor(((dft_length + 1) * hz1) / sample_rate));
     }
 
     for (size_t i = 0; i < static_cast<size_t>(num_mel_bins); i++) {
