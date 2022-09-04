@@ -39,6 +39,119 @@ namespace onnxruntime {
 
 static constexpr int DEFAULT_PROTOBUF_BLOCK_SIZE = 4 * 1024 * 1024;
 
+void ConveTens(TensorProto* tensor)
+{
+            size_t element_size=1;
+            switch(tensor->data_type())
+            {
+             case TensorProto_DataType_FLOAT:
+             case TensorProto_DataType_INT32:
+             case TensorProto_DataType_UINT32:
+             element_size=4;
+             break;
+
+             case TensorProto_DataType_UINT8:
+             case TensorProto_DataType_INT8:
+             element_size=1;
+             break;
+
+             case TensorProto_DataType_UINT16:
+             case TensorProto_DataType_INT16:
+             case TensorProto_DataType_FLOAT16:
+             case TensorProto_DataType_BFLOAT16:
+             element_size=2;
+             break;
+
+             case TensorProto_DataType_UINT64:
+             case TensorProto_DataType_INT64:
+             case TensorProto_DataType_COMPLEX64:
+             element_size=8;
+             break;
+            }
+            size_t num_elements = (tensor->raw_data().size()) / element_size;
+            char *bytes = (char*)(tensor->mutable_raw_data()->c_str());
+            uint64_t *pbt = (uint64_t*)bytes;
+/*
+            std::cout << "Madhu ConveTens tensor->name()=" << tensor->name() 
+                      << " tensor->data_type()=" << tensor->data_type() 
+                      << " element_size=" << element_size 
+                      << " num_elements=" << num_elements << std::hex << " pbt[0]=" << pbt[0] 
+                      << " pbt[1]=" << pbt[1] << std::dec << std::endl;
+*/
+
+           for (size_t i = 0; i < num_elements; ++i) {
+                char* start_byte = bytes + i * element_size;
+                char* end_byte = start_byte + element_size - 1;
+                /* keep swapping */
+                for (size_t count = 0; count < element_size / 2; ++count) {
+                    char temp = *start_byte;
+                    *start_byte = *end_byte;
+                    *end_byte = temp;
+                    ++start_byte;
+                    --end_byte;
+                }
+           }
+/*
+          std::cout << "Madhu1 ConveTens pbt[0]=" << std::hex << pbt[0] 
+                    << " pbt[1]=" << pbt[1] << std::dec << std::endl;
+*/
+  return;
+}
+
+void ConvGraph(Model& model)
+{
+    Graph& gr = model.MainGraph();
+    for (const auto& [name, tensor_p] : gr.GetAllInitializedTensors()) {
+      std::cout << "Madhu name=" << name << " tensor_p->has_raw_data()=" << tensor_p->has_raw_data()
+                << std::endl;
+      if (tensor_p->has_raw_data()) {
+       ConveTens((TensorProto*)tensor_p);
+      }
+    }
+}
+
+void ConvGraph(std::shared_ptr<Model>& p_model)
+{
+    Graph& gr = p_model->MainGraph();
+    for (const auto& [name, tensor_p] : gr.GetAllInitializedTensors()) {
+      std::cout << "Madhu name=" << name << " tensor_p->has_raw_data()=" << tensor_p->has_raw_data()
+                << std::endl;
+      if (tensor_p->has_raw_data()) {
+       ConveTens((TensorProto*)tensor_p);
+      }
+    }
+/*
+    for (auto& node : gr.Nodes()) {
+       for (auto* input_def : node.InputDefs()) {
+           std::cout << "Madhu input_def->Name()=" << input_def->Name() << std::endl;
+           const TensorShapeProto* shapepr = input_def->Shape();
+           if (shapepr != NULL)
+           {
+               std::cout << "Has Shape dim_size=" << shapepr->dim_size() << std::endl;
+               for (int ii=0; ii<shapepr->dim_size(); ii++)
+               {
+                   const TensorShapeProto_Dimension dim = shapepr->dim(ii);
+                   std::cout << " dim=" << std::hex << dim.dim_value() << std::dec <<  std::endl;
+               }
+           }
+       }
+       for (auto* output_def : node.OutputDefs()) {
+           std::cout << "Madhu output_def->Name()=" << output_def->Name() << std::endl;
+           const TensorShapeProto* shapepr = output_def->Shape();
+           if (shapepr != NULL)
+           {
+               std::cout << "Has Shape dim_size=" << shapepr->dim_size() << std::endl;
+               for (int ii=0; ii<shapepr->dim_size(); ii++)
+               {
+                   const TensorShapeProto_Dimension dim = shapepr->dim(ii);
+                   std::cout << " dim=" << std::hex << dim.dim_value() << std::dec <<  std::endl;
+               }
+           }
+       }
+    }
+*/
+}
+
 Model::Model(const std::string& graph_name,
              bool is_onnx_domain_only,
              const ModelMetaData& model_metadata,
@@ -351,6 +464,7 @@ Status Model::Load(std::istream& model_istream, ModelProto* p_model_proto) {
   if (!model_istream.good()) {
     return Status(ONNXRUNTIME, INVALID_ARGUMENT, "Invalid istream object.");
   }
+  // raise(SIGINT);
   if (!p_model_proto) {
     return Status(ONNXRUNTIME, INVALID_ARGUMENT, "Null model_proto ptr.");
   }
@@ -381,6 +495,8 @@ Status Model::Load(const ModelProto& model_proto,
   if (!utils::HasGraph(model_proto)) {
     return Status(ONNXRUNTIME, INVALID_ARGUMENT, "No graph was found in the protobuf.");
   }
+
+  std::cout << "Madhu0 model_path=" << model_path << std::endl;
 
   // need to call private ctor so can't use make_shared
   GSL_SUPPRESS(r .11)
@@ -421,6 +537,8 @@ Status Model::Load(ModelProto&& model_proto,
   if (!utils::HasGraph(model_proto)) {
     return Status(ONNXRUNTIME, INVALID_ARGUMENT, "No graph was found in the protobuf.");
   }
+
+  std::cout << "Madhu1 model_path=" << model_path << std::endl;
 
   // need to call private ctor so can't use make_shared
   GSL_SUPPRESS(r .11)
@@ -482,7 +600,7 @@ static Status LoadModel(const T& file_path, ONNX_NAMESPACE::ModelProto& model_pr
   const auto loader = [&model_proto](int fd) {
     return Model::Load(fd, model_proto);
   };
-
+  std::cout << "Madhu3 file_path=" << file_path << std::endl;
   return LoadModelHelper(file_path, loader);
 }
 
@@ -493,7 +611,7 @@ static Status LoadModel(const T& file_path, std::shared_ptr<Model>& p_model,
   const auto loader = [&file_path, &p_model, local_registries, &logger, &options](int fd) {
     return Model::Load(fd, ToPathString(file_path), p_model, local_registries, logger, options);
   };
-
+  std::cout << "Madhu4 file_path=" << file_path << std::endl;
   return LoadModelHelper(file_path, loader);
 }
 
@@ -659,6 +777,11 @@ Status Model::Load(int fd, const PathString& model_path, std::shared_ptr<Model>&
   ORT_RETURN_IF_ERROR(Load(fd, model_proto));
 
   p_model = std::make_shared<Model>(std::move(model_proto), model_path, local_registries, logger, options);
+  
+  if ((model_path != "") && (endian::native != endian::little))
+  {
+    ConvGraph(p_model);
+  }
 
   Graph::ResolveOptions resolve_options;
   resolve_options.no_proto_sync_required = true;
@@ -671,6 +794,8 @@ Status Model::Save(Model& model, int p_fd) {
   if (p_fd < 0) {
     return Status(ONNXRUNTIME, INVALID_ARGUMENT, "<p_fd> is less than 0.");
   }
+  if (endian::native == endian::little)
+      ConvGraph(model);
 
   ORT_RETURN_IF_ERROR(model.MainGraph().Resolve());
 

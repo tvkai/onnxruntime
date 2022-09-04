@@ -5,6 +5,7 @@
 
 #include <cassert>
 #include <cstring>
+#include <iostream>
 
 #include "core/framework/endian.h"
 
@@ -56,11 +57,12 @@ Status CopyLittleEndian(size_t element_size_in_bytes,
   ORT_RETURN_IF(source_bytes.size_bytes() != destination_bytes.size_bytes(),
                 "source and destination buffer size mismatch");
 
-  if constexpr (endian::native == endian::little) {
+  // if constexpr (endian::native == endian::little) {
     std::memcpy(destination_bytes.data(), source_bytes.data(), source_bytes.size_bytes());
-  } else {
-    SwapByteOrderCopy(element_size_in_bytes, source_bytes, destination_bytes);
-  }
+    std::cout << "Madhu element_size_in_bytes=" << element_size_in_bytes << std::endl;
+  // } else {
+  //  SwapByteOrderCopy(element_size_in_bytes, source_bytes, destination_bytes);
+  // }
 
   return Status::OK();
 }

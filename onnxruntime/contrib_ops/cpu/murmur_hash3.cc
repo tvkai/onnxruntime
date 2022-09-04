@@ -222,19 +222,42 @@ Status MurmurHash3::Compute(OpKernelContext* ctx) const {
       ++output;
     }
   } else {
-    auto input = reinterpret_cast<const unsigned char*>(keys->DataRaw());
     //input_element_bytes is 4, 8,.. less than 4 bytes is not allowed
     int input_num_bytes = static_cast<int>(input_element_bytes);
+    auto input = reinterpret_cast<const unsigned char*>(keys->DataRaw());
+    char *input_cp = (char *)malloc(input_count * input_num_bytes);
+    char *input_cp_org = input_cp;
+    memcpy(input_cp, input, input_count * input_num_bytes);
+    size_t num_elements = input_count;
+    size_t element_size = input_num_bytes;
+
+    /*onnx is little endian serialized always-tweak byte order if needed*/
+    if (1) {
+         for (size_t i = 0; i < num_elements; ++i) {
+             char* start_byte = input_cp + i * element_size;
+             char* end_byte = start_byte + element_size - 1;
+             /* keep swapping */
+             for (size_t count = 0; count < element_size / 2; ++count) {
+                  char temp = *start_byte;
+                  *start_byte = *end_byte;
+                  *end_byte = temp;
+                  ++start_byte;
+                  --end_byte;
+             }
+         }
+     }
+
     ORT_ENFORCE(input_num_bytes % 4 == 0);
-    const auto input_end = input + input_count * input_num_bytes;
-    while (input != input_end) {
-      MurmurHash3_x86_32(input,
+    const auto input_end = input_cp + input_count * input_num_bytes;
+    while (input_cp != input_end) {
+      MurmurHash3_x86_32(input_cp,
                          input_num_bytes,
                          seed_,
                          output);
-      input += input_num_bytes;
+      input_cp += input_num_bytes;
       ++output;
     }
+    free(input_cp_org);
   }
   return Status::OK();
 }
