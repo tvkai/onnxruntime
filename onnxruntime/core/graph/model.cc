@@ -794,7 +794,7 @@ Status Model::Save(Model& model, int p_fd) {
   if (p_fd < 0) {
     return Status(ONNXRUNTIME, INVALID_ARGUMENT, "<p_fd> is less than 0.");
   }
-  if (endian::native == endian::little)
+  if (endian::native != endian::little)
       ConvGraph(model);
 
   ORT_RETURN_IF_ERROR(model.MainGraph().Resolve());
