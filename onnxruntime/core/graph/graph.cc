@@ -42,6 +42,104 @@ using namespace ::onnxruntime::common;
 
 namespace onnxruntime {
 
+void ConveTens(TensorProto* tensor)
+{
+            size_t element_size=1;
+            char* bytes = NULL;
+            size_t num_elements=0;
+            switch(tensor->data_type())
+            {
+             case TensorProto_DataType_FLOAT:
+             bytes = (char*)(tensor->mutable_float_data()->mutable_data());
+             num_elements = tensor->float_data_size();
+             element_size=4;
+             break;
+
+             case TensorProto_DataType_INT32:
+             bytes = (char*)(tensor->mutable_int32_data()->mutable_data());
+             num_elements = tensor->int32_data_size();
+             element_size=4;
+             break;
+
+             case TensorProto_DataType_UINT32:
+             bytes = (char*)(tensor->mutable_int32_data()->mutable_data());
+             num_elements = tensor->int32_data_size();
+             element_size=4;
+             break;
+
+             case TensorProto_DataType_UINT8:
+             case TensorProto_DataType_INT8:
+             element_size=1;
+             break;
+
+             case TensorProto_DataType_UINT16:
+             case TensorProto_DataType_INT16:
+             case TensorProto_DataType_FLOAT16:
+             case TensorProto_DataType_BFLOAT16:
+             element_size=2;
+             break;
+
+             case TensorProto_DataType_UINT64:
+             bytes = (char*)(tensor->mutable_uint64_data()->mutable_data());
+             num_elements = tensor->uint64_data_size();
+             element_size=8;
+             break;
+
+             case TensorProto_DataType_INT64:
+             bytes = (char*)(tensor->mutable_int64_data()->mutable_data());
+             num_elements = tensor->int64_data_size();
+             element_size=8;
+             break;
+
+             case TensorProto_DataType_COMPLEX64:
+             element_size=8;
+             break;
+            }
+            if (tensor->has_raw_data()) {
+              num_elements = (tensor->raw_data().size()) / element_size;
+              bytes = (char*)(tensor->mutable_raw_data()->c_str());
+            }
+            uint64_t *pbt = (uint64_t*)bytes;
+/*
+            std::cout << "Madhu ConveTens tensor->name()=" << tensor->name()
+                      << " tensor->data_type()=" << tensor->data_type()
+                      << " element_size=" << element_size
+                      << " num_elements=" << num_elements << std::hex << " pbt[0]=" << pbt[0]
+                      << " pbt[1]=" << pbt[1] << std::dec << std::endl;
+*/
+
+           for (size_t i = 0; i < num_elements; ++i) {
+                char* start_byte = bytes + i * element_size;
+                char* end_byte = start_byte + element_size - 1;
+                /* keep swapping */
+                for (size_t count = 0; count < element_size / 2; ++count) {
+                    char temp = *start_byte;
+                    *start_byte = *end_byte;
+                    *end_byte = temp;
+                    ++start_byte;
+                    --end_byte;
+                }
+           }
+/*
+          std::cout << "Madhu1 ConveTens pbt[0]=" << std::hex << pbt[0]
+                    << " pbt[1]=" << pbt[1] << std::dec << std::endl;
+*/
+
+  return;
+}
+
+void ConvGraph(Graph& gr)
+{
+    // Graph& gr = model.MainGraph();
+    for (const auto& [name, tensor_p] : gr.GetAllInitializedTensors()) {
+      std::cout << "Madhu graph.cc ConvGraph name=" << name << " tensor_p->has_raw_data()=" << tensor_p->has_raw_data()
+                << std::endl;
+      if (tensor_p->has_raw_data()) {
+       ConveTens((TensorProto*)tensor_p);
+      }
+    }
+}
+
 #if !defined(ORT_MINIMAL_BUILD)
 #define NO_CHANGE_ON_SYNC_FLAG(...)                  \
   do {                                               \
@@ -3087,6 +3185,11 @@ SaveInputsOutputsToOrtFormat(flatbuffers::FlatBufferBuilder& builder, const std:
 
 common::Status Graph::SaveToOrtFormat(flatbuffers::FlatBufferBuilder& builder,
                                       flatbuffers::Offset<fbs::Graph>& fbs_graph) const {
+    for (const auto& [name, tensor_p] : GetAllInitializedTensors()) {
+      // if (tensor_p->has_raw_data()) {
+       ConveTens((TensorProto*)tensor_p);
+      // }
+    }
   auto inputs = SaveInputsOutputsToOrtFormat(builder, graph_inputs_including_initializers_);
   auto outputs = SaveInputsOutputsToOrtFormat(builder, graph_outputs_);
 
@@ -4263,8 +4366,9 @@ Status Graph::LoadFromOrtFormat(const onnxruntime::fbs::Graph& fbs_graph,
                                   nullptr, nullptr, logger,
                                   // Assume anything in ORT format has already been validated.
                                   false);
-
   ORT_RETURN_IF_ERROR(graph->LoadFromOrtFormat(fbs_graph, can_use_flatbuffer_for_initializers));
+
+  ConvGraph(*graph);
 
 #if !defined(ORT_MINIMAL_BUILD)
   // in a full build we need to run Resolve to fully populate ResolveContext and Node::op_,
@@ -4292,7 +4396,10 @@ Status Graph::LoadFromOrtFormat(const onnxruntime::fbs::Graph& fbs_graph,
                                   // Assume anything in ORT format has already been validated.
                                   false);
 
-  return graph->LoadFromOrtFormat(fbs_graph, can_use_flatbuffer_for_initializers);
+  Status ret = graph->LoadFromOrtFormat(fbs_graph, can_use_flatbuffer_for_initializers);
+  ConvGraph(*graph);
+  return ret;
+  // return graph->LoadFromOrtFormat(fbs_graph, can_use_flatbuffer_for_initializers);
 }
 
 Graph::Graph(const Model& owning_model,

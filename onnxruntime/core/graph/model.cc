@@ -98,6 +98,7 @@ void ConveTens(TensorProto* tensor)
   return;
 }
 
+
 void ConvGraph(Model& model)
 {
     Graph& gr = model.MainGraph();
@@ -110,47 +111,6 @@ void ConvGraph(Model& model)
     }
 }
 
-void ConvGraph(std::shared_ptr<Model>& p_model)
-{
-    Graph& gr = p_model->MainGraph();
-    for (const auto& [name, tensor_p] : gr.GetAllInitializedTensors()) {
-      std::cout << "Madhu name=" << name << " tensor_p->has_raw_data()=" << tensor_p->has_raw_data()
-                << std::endl;
-      if (tensor_p->has_raw_data()) {
-       ConveTens((TensorProto*)tensor_p);
-      }
-    }
-/*
-    for (auto& node : gr.Nodes()) {
-       for (auto* input_def : node.InputDefs()) {
-           std::cout << "Madhu input_def->Name()=" << input_def->Name() << std::endl;
-           const TensorShapeProto* shapepr = input_def->Shape();
-           if (shapepr != NULL)
-           {
-               std::cout << "Has Shape dim_size=" << shapepr->dim_size() << std::endl;
-               for (int ii=0; ii<shapepr->dim_size(); ii++)
-               {
-                   const TensorShapeProto_Dimension dim = shapepr->dim(ii);
-                   std::cout << " dim=" << std::hex << dim.dim_value() << std::dec <<  std::endl;
-               }
-           }
-       }
-       for (auto* output_def : node.OutputDefs()) {
-           std::cout << "Madhu output_def->Name()=" << output_def->Name() << std::endl;
-           const TensorShapeProto* shapepr = output_def->Shape();
-           if (shapepr != NULL)
-           {
-               std::cout << "Has Shape dim_size=" << shapepr->dim_size() << std::endl;
-               for (int ii=0; ii<shapepr->dim_size(); ii++)
-               {
-                   const TensorShapeProto_Dimension dim = shapepr->dim(ii);
-                   std::cout << " dim=" << std::hex << dim.dim_value() << std::dec <<  std::endl;
-               }
-           }
-       }
-    }
-*/
-}
 
 Model::Model(const std::string& graph_name,
              bool is_onnx_domain_only,
@@ -780,7 +740,7 @@ Status Model::Load(int fd, const PathString& model_path, std::shared_ptr<Model>&
   
   if ((model_path != "") && (endian::native != endian::little))
   {
-    ConvGraph(p_model);
+    ConvGraph(*p_model);
   }
 
   Graph::ResolveOptions resolve_options;
@@ -959,6 +919,13 @@ common::Status Model::LoadFromOrtFormat(const fbs::Model& fbs_model,
   ORT_RETURN_IF_ERROR(Graph::LoadFromOrtFormat(*fbs_graph, *model, domain_to_version,
                                                can_use_flatbuffer_for_initializers, logger, model->graph_));
 #endif
+
+/*
+  std::cout << "Madhu ORT model->ModelPath().ToPathString()=" << model->ModelPath().ToPathString() 
+            << " model->MainGraph().ModelPath()=" << model->MainGraph().ModelPath().ToPathString()
+            << std::endl;
+  ConvGraph(*model);
+*/
   return Status::OK();
 }
 
