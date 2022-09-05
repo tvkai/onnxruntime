@@ -70,8 +70,8 @@ void ConveTens(TensorProto* tensor)
             }
             size_t num_elements = (tensor->raw_data().size()) / element_size;
             char *bytes = (char*)(tensor->mutable_raw_data()->c_str());
-            uint64_t *pbt = (uint64_t*)bytes;
 /*
+            uint64_t *pbt = (uint64_t*)bytes;
             std::cout << "Madhu ConveTens tensor->name()=" << tensor->name() 
                       << " tensor->data_type()=" << tensor->data_type() 
                       << " element_size=" << element_size 
