@@ -920,12 +920,6 @@ common::Status Model::LoadFromOrtFormat(const fbs::Model& fbs_model,
                                                can_use_flatbuffer_for_initializers, logger, model->graph_));
 #endif
 
-/*
-  std::cout << "Madhu ORT model->ModelPath().ToPathString()=" << model->ModelPath().ToPathString() 
-            << " model->MainGraph().ModelPath()=" << model->MainGraph().ModelPath().ToPathString()
-            << std::endl;
-  ConvGraph(*model);
-*/
   return Status::OK();
 }
 
