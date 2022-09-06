@@ -100,13 +100,13 @@ void ConveTens(TensorProto* tensor)
               bytes = (char*)(tensor->mutable_raw_data()->c_str());
             }
             uint64_t *pbt = (uint64_t*)bytes;
-/*
-            std::cout << "Madhu ConveTens tensor->name()=" << tensor->name()
+
+            std::cout << "Madhu graph.cc ConveTens tensor->name()=" << tensor->name()
                       << " tensor->data_type()=" << tensor->data_type()
                       << " element_size=" << element_size
                       << " num_elements=" << num_elements << std::hex << " pbt[0]=" << pbt[0]
                       << " pbt[1]=" << pbt[1] << std::dec << std::endl;
-*/
+
 
            for (size_t i = 0; i < num_elements; ++i) {
                 char* start_byte = bytes + i * element_size;
@@ -120,25 +120,14 @@ void ConveTens(TensorProto* tensor)
                     --end_byte;
                 }
            }
-/*
-          std::cout << "Madhu1 ConveTens pbt[0]=" << std::hex << pbt[0]
+
+          std::cout << "Madhu1 graph.cc ConveTens pbt[0]=" << std::hex << pbt[0]
                     << " pbt[1]=" << pbt[1] << std::dec << std::endl;
-*/
+
 
   return;
 }
 
-void ConvGraph(Graph& gr)
-{
-    // Graph& gr = model.MainGraph();
-    for (const auto& [name, tensor_p] : gr.GetAllInitializedTensors()) {
-      std::cout << "Madhu graph.cc ConvGraph name=" << name << " tensor_p->has_raw_data()=" << tensor_p->has_raw_data()
-                << std::endl;
-      if (tensor_p->has_raw_data()) {
-       ConveTens((TensorProto*)tensor_p);
-      }
-    }
-}
 
 #if !defined(ORT_MINIMAL_BUILD)
 #define NO_CHANGE_ON_SYNC_FLAG(...)                  \
@@ -4368,8 +4357,6 @@ Status Graph::LoadFromOrtFormat(const onnxruntime::fbs::Graph& fbs_graph,
                                   false);
   ORT_RETURN_IF_ERROR(graph->LoadFromOrtFormat(fbs_graph, can_use_flatbuffer_for_initializers));
 
-  ConvGraph(*graph);
-
 #if !defined(ORT_MINIMAL_BUILD)
   // in a full build we need to run Resolve to fully populate ResolveContext and Node::op_,
   // which will allow optimizers to run or non-ORT EPs to take nodes.
@@ -4395,11 +4382,7 @@ Status Graph::LoadFromOrtFormat(const onnxruntime::fbs::Graph& fbs_graph,
                                   logger,
                                   // Assume anything in ORT format has already been validated.
                                   false);
-
-  Status ret = graph->LoadFromOrtFormat(fbs_graph, can_use_flatbuffer_for_initializers);
-  ConvGraph(*graph);
-  return ret;
-  // return graph->LoadFromOrtFormat(fbs_graph, can_use_flatbuffer_for_initializers);
+  return graph->LoadFromOrtFormat(fbs_graph, can_use_flatbuffer_for_initializers);
 }
 
 Graph::Graph(const Model& owning_model,
@@ -4461,6 +4444,10 @@ common::Status Graph::LoadFromOrtFormat(const onnxruntime::fbs::Graph& fbs_graph
       TensorProto* initializer = deserialized_proto_data_.add_initializer();
       ORT_RETURN_IF_ERROR(fbs::utils::LoadInitializerOrtFormat(*fbs_tensor, *initializer,
                                                                can_use_flatbuffer_for_initializers));
+      if (initializer->has_raw_data())
+      {
+          ConveTens(initializer);
+      }
       auto p = name_to_initial_tensor_.emplace(initializer->name(), initializer);
       if (!p.second) {
         LOGS(logger_, WARNING) << "Duplicate initializer (dense or ConstantNode): '" << initializer->name()
@@ -4481,6 +4468,16 @@ common::Status Graph::LoadFromOrtFormat(const onnxruntime::fbs::Graph& fbs_graph
       SparseTensorProto sparse_initializer;
       ORT_RETURN_IF_ERROR(fbs::utils::LoadSparseInitializerOrtFormat(*fbs_sparse_tensor, sparse_initializer));
       TensorProto& initializer = *deserialized_proto_data_.add_initializer();
+      TensorProto* indices = sparse_initializer.mutable_indices();
+      if (indices->has_raw_data())
+      {
+          ConveTens(indices);
+      }
+      TensorProto* values = sparse_initializer.mutable_values();
+      if (values->has_raw_data())
+      {
+          ConveTens(values);
+      }
       ORT_RETURN_IF_ERROR(utils::SparseTensorProtoToDenseTensorProto(sparse_initializer, model_path, initializer));
       auto p = name_to_initial_tensor_.emplace(initializer.name(), &initializer);
       if (!p.second) {
