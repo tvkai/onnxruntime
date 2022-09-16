@@ -180,6 +180,52 @@ static Status ReadExternalDataForTensor(const ONNX_NAMESPACE::TensorProto& tenso
 namespace onnxruntime {
 namespace utils {
 #if !defined(ORT_MINIMAL_BUILD)
+void ConvertRawDataInTensorProto(TensorProto* tensor)
+{
+            size_t element_size=1;
+            switch(tensor->data_type())
+            {
+             case TensorProto_DataType_FLOAT:
+             case TensorProto_DataType_INT32:
+             case TensorProto_DataType_UINT32:
+             element_size=4;
+             break;
+
+             case TensorProto_DataType_UINT8:
+             case TensorProto_DataType_INT8:
+             element_size=1;
+             break;
+
+             case TensorProto_DataType_UINT16:
+             case TensorProto_DataType_INT16:
+             case TensorProto_DataType_FLOAT16:
+             case TensorProto_DataType_BFLOAT16:
+             element_size=2;
+             break;
+
+             case TensorProto_DataType_UINT64:
+             case TensorProto_DataType_INT64:
+             case TensorProto_DataType_COMPLEX64:
+             element_size=8;
+             break;
+            }
+            size_t num_elements = (tensor->raw_data().size()) / element_size;
+            char *bytes = (char*)(tensor->mutable_raw_data()->c_str());
+            for (size_t i = 0; i < num_elements; ++i) {
+                char* start_byte = bytes + i * element_size;
+                char* end_byte = start_byte + element_size - 1;
+                /* keep swapping */
+                for (size_t count = 0; count < element_size / 2; ++count) {
+                    char temp = *start_byte;
+                    *start_byte = *end_byte;
+                    *end_byte = temp;
+                    ++start_byte;
+                    --end_byte;
+                }
+            }
+  return;
+}
+
 static Status UnpackTensorWithExternalDataImpl(const ONNX_NAMESPACE::TensorProto& tensor,
                                                const ORTCHAR_T* tensor_proto_dir,
                                                size_t expected_num_elements, size_t element_size,

@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #include "core/framework/murmurhash3.h"
+#include "core/framework/endian.h"
 
 // Original source: https://github.com/aappleby/smhasher/blob/master/src/MurmurHash3.cpp
 //-----------------------------------------------------------------------------
@@ -57,30 +58,31 @@ inline uint64_t rotl64(uint64_t x, int8_t r) {
 // handle aligned reads, do the conversion here
 
 FORCE_INLINE uint32_t getblock32(const uint32_t* p, int i) {
-#if !defined(_AIX)
-  return p[i];
-#else
-  // On Big endian machines like AIX, this should be swapped values.
-  const uint8_t *c = (const uint8_t *)&p[i];
-  return (uint32_t)c[0] | (uint32_t)c[1] <<  8 | (uint32_t)c[2] << 16 | (uint32_t)c[3] << 24;
-#endif 
+  if constexpr (onnxruntime::endian::native == onnxruntime::endian::little) {
+    return p[i];
+  } else {
+    const uint8_t* c = (const uint8_t*)&p[i];
+    return (uint32_t)c[0] |
+           (uint32_t)c[1] << 8 |
+           (uint32_t)c[2] << 16 |
+           (uint32_t)c[3] << 24;
+  }
 }
 
 FORCE_INLINE uint64_t getblock64(const uint64_t* p, int i) {
-#if !defined(_AIX)
-  return p[i];
-#else
-    // On Big endian machine like AIX, this should be swapped values.
-    const uint8_t *c = (const uint8_t *)&p[i];
-    return  (uint64_t)c[0] | 
-            (uint64_t)c[1] <<  8 | 
-            (uint64_t)c[2] << 16 | 
-            (uint64_t)c[3] << 24 |
-	        (uint64_t)c[4] << 32 |
-	        (uint64_t)c[5] << 40 |
-	        (uint64_t)c[6] << 48 |
-	        (uint64_t)c[7] << 56;
-#endif
+  if constexpr (onnxruntime::endian::native == onnxruntime::endian::little) {
+    return p[i];
+  } else {
+    const uint8_t* c = (const uint8_t*)&p[i];
+    return (uint64_t)c[0] |
+           (uint64_t)c[1] << 8 |
+           (uint64_t)c[2] << 16 |
+           (uint64_t)c[3] << 24 |
+           (uint64_t)c[4] << 32 |
+           (uint64_t)c[5] << 40 |
+           (uint64_t)c[6] << 48 |
+           (uint64_t)c[7] << 56;
+  }
 }
 
 //-----------------------------------------------------------------------------
