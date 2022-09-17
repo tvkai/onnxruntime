@@ -99,13 +99,14 @@ void ConveTens(TensorProto* tensor)
               num_elements = (tensor->raw_data().size()) / element_size;
               bytes = (char*)(tensor->mutable_raw_data()->c_str());
             }
+/*
             uint64_t *pbt = (uint64_t*)bytes;
-
             std::cout << "Madhu graph.cc ConveTens tensor->name()=" << tensor->name()
                       << " tensor->data_type()=" << tensor->data_type()
                       << " element_size=" << element_size
                       << " num_elements=" << num_elements << std::hex << " pbt[0]=" << pbt[0]
                       << " pbt[1]=" << pbt[1] << std::dec << std::endl;
+*/
 
 
            for (size_t i = 0; i < num_elements; ++i) {
@@ -120,10 +121,10 @@ void ConveTens(TensorProto* tensor)
                     --end_byte;
                 }
            }
-
+/*
           std::cout << "Madhu1 graph.cc ConveTens pbt[0]=" << std::hex << pbt[0]
                     << " pbt[1]=" << pbt[1] << std::dec << std::endl;
-
+*/
 
   return;
 }
@@ -2089,6 +2090,55 @@ class GraphInferencerImpl : public ONNX_NAMESPACE::GraphInferencer {
   const Graph::ResolveOptions& options_;
 };
 
+void ConvNode(Node& node, Graph& graph)
+{
+   for (auto nodearg: node.InputDefs())
+   {
+      const TensorProto* inpt = nullptr;
+      if (graph.IsSparseInitializer(nodearg->Name()))
+      {
+          // Skip Sparse Initializer as no node op support
+          // Sparse Initializer for now
+          break;
+      }
+      graph.GetInitializedTensor(nodearg->Name(), inpt);
+      if (inpt != nullptr)
+      {
+          if (inpt->has_raw_data())
+          {
+              TensorProto nt = *inpt;
+              ConveTens(&nt);
+              Status st = graph.ReplaceInitializedTensor(nt);
+              assert(st.IsOK());
+          }
+      }
+   }
+
+   for (auto nodearg: node.OutputDefs())
+   {
+
+      if (graph.IsSparseInitializer(nodearg->Name()))
+      {
+          // Skip Sparse Initializer as no node op support
+          // Sparse Initializer for now
+          break;
+      }
+      const TensorProto* outt = nullptr;
+      graph.GetInitializedTensor(nodearg->Name(), outt);
+      if (outt != nullptr)
+      {
+          if (outt->has_raw_data())
+          {
+              TensorProto nt = *outt;
+              ConveTens(&nt);
+              Status st = graph.ReplaceInitializedTensor(nt);
+              assert(st.IsOK());
+          }
+
+      }
+   }
+}
+
 // An implementation of the InferenceContext interface required by operator-specific
 // shape inference for onnxruntime graphs.
 class InferenceContextImpl : public ONNX_NAMESPACE::InferenceContext {
@@ -2384,6 +2434,7 @@ Status Graph::InferAndVerifyTypeMatch(Node& node, const OpSchema& op, const Reso
   // Once that completes, the outputs from the node containing the subgraph will be updated, and the final values
   // returned here.
   SubgraphInferencingFunc func(Graph::InferAndVerifySubgraphTypes);
+  ConvNode(node, *this);
   InferenceContextImpl context(node, func, *this, options);
 
   {
@@ -2507,6 +2558,7 @@ Status Graph::InferAndVerifyTypeMatch(Node& node, const OpSchema& op, const Reso
       }
     }
   }
+  ConvNode(node, *this);
 
   return Status::OK();
 }

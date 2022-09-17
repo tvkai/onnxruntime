@@ -98,16 +98,31 @@ void ConveTens(TensorProto* tensor)
   return;
 }
 
+void GetSubGraphs(Graph& graph, std::vector<Graph*>& subgraphs)
+{
+  for (auto& node : graph.Nodes()) {
+    for (const Graph* subgraph1 : node.GetSubgraphs()) {
+      Graph* subgraph = const_cast<Graph*>(subgraph1);
+      subgraphs.push_back(subgraph);
+      GetSubGraphs(*subgraph, subgraphs);
+    }
+  }
+}
 
 void ConvGraph(Model& model)
 {
-    Graph& gr = model.MainGraph();
+    Graph& gra = model.MainGraph();
+    std::vector<Graph*> all_subgraphs;
+    GetSubGraphs(gra, all_subgraphs);
+    all_subgraphs.push_back(&gra);
+
+    for (Graph*& grp: all_subgraphs) {
+    Graph& gr = *grp;
     for (const auto& [name, tensor_p] : gr.GetAllInitializedTensors()) {
-      std::cout << "Madhu name=" << name << " tensor_p->has_raw_data()=" << tensor_p->has_raw_data()
-                << std::endl;
       if (tensor_p->has_raw_data()) {
        ConveTens((TensorProto*)tensor_p);
       }
+    }
     }
 }
 
@@ -456,8 +471,6 @@ Status Model::Load(const ModelProto& model_proto,
     return Status(ONNXRUNTIME, INVALID_ARGUMENT, "No graph was found in the protobuf.");
   }
 
-  std::cout << "Madhu0 model_path=" << model_path << std::endl;
-
   // need to call private ctor so can't use make_shared
   GSL_SUPPRESS(r .11)
 
@@ -497,8 +510,6 @@ Status Model::Load(ModelProto&& model_proto,
   if (!utils::HasGraph(model_proto)) {
     return Status(ONNXRUNTIME, INVALID_ARGUMENT, "No graph was found in the protobuf.");
   }
-
-  std::cout << "Madhu1 model_path=" << model_path << std::endl;
 
   // need to call private ctor so can't use make_shared
   GSL_SUPPRESS(r .11)
@@ -560,7 +571,6 @@ static Status LoadModel(const T& file_path, ONNX_NAMESPACE::ModelProto& model_pr
   const auto loader = [&model_proto](int fd) {
     return Model::Load(fd, model_proto);
   };
-  std::cout << "Madhu3 file_path=" << file_path << std::endl;
   return LoadModelHelper(file_path, loader);
 }
 
@@ -571,7 +581,6 @@ static Status LoadModel(const T& file_path, std::shared_ptr<Model>& p_model,
   const auto loader = [&file_path, &p_model, local_registries, &logger, &options](int fd) {
     return Model::Load(fd, ToPathString(file_path), p_model, local_registries, logger, options);
   };
-  std::cout << "Madhu4 file_path=" << file_path << std::endl;
   return LoadModelHelper(file_path, loader);
 }
 
