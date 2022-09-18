@@ -2113,7 +2113,7 @@ void ConvNode(Node& node, Graph& graph)
           }
       }
    }
-
+/*
    for (auto nodearg: node.OutputDefs())
    {
 
@@ -2137,6 +2137,7 @@ void ConvNode(Node& node, Graph& graph)
 
       }
    }
+*/
 }
 
 // An implementation of the InferenceContext interface required by operator-specific
