@@ -1238,40 +1238,8 @@ static void SparsifyGeneric(const void* dense_raw_data, size_t n_dense_elements,
     indices.set_raw_data(std::string());
   }
 
-  char *bytes = (char*)(indices.mutable_raw_data()->c_str());
-  size_t elem_sz = 1;
-  switch(indices.data_type())
-  {
-      case TensorProto_DataType_INT8:
-      elem_sz=1;
-      break;
-
-      case TensorProto_DataType_INT16:
-      elem_sz = sizeof(uint16_t);
-      break;
-   
-      case TensorProto_DataType_INT32:
-      elem_sz = sizeof(uint32_t);
-      break;
-  }
-  /* Convert indices to Little endian as expected by UnpackTensorWithRawDataImpl */
-  if(1)
-  {
-      // std::cout<<"Doing byte swapping for little endian tensorprotoutils.cc" << std::endl;
-      size_t num_elements = indices.raw_data().size() / elem_sz;
-
-      for (size_t i = 0; i < num_elements; ++i) {
-          char* start_byte = bytes + i * elem_sz;
-          char* end_byte = start_byte + elem_sz - 1;
-          /* keep swapping */
-          for (size_t count = 0; count < elem_sz / 2; ++count) {
-               char temp = *start_byte;
-               *start_byte = *end_byte;
-               *end_byte = temp;
-               ++start_byte;
-               --end_byte;
-          }
-      }
+  if constexpr (endian::native != endian::little) {
+       utils::ConvertRawDataInTensorProto((ONNX_NAMESPACE::TensorProto*)&indices);
   }
   nnz = gathered_indices.size();
 }
