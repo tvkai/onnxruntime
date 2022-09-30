@@ -1221,48 +1221,7 @@ Graph::Graph(const Model& owning_model,
             // Dense tensor values in raw data and hence expected to be in Little endian. 
             // So change the endianness in Big endian system. 
             // std::cout << "Doing byte swapping for attribute of Constatnt node in graph.cc" << std::endl;
-            size_t element_size=1;
-            switch(tensor->data_type())
-            {
-             case TensorProto_DataType_FLOAT:
-             case TensorProto_DataType_INT32:
-             case TensorProto_DataType_UINT32:
-             element_size=4;
-             break;
-
-             case TensorProto_DataType_UINT8:
-             case TensorProto_DataType_INT8:
-             element_size=1;
-             break;
-
-             case TensorProto_DataType_UINT16:
-             case TensorProto_DataType_INT16:
-             case TensorProto_DataType_FLOAT16:
-             case TensorProto_DataType_BFLOAT16:
-             element_size=2;
-             break;
-
-             case TensorProto_DataType_UINT64:
-             case TensorProto_DataType_INT64:
-             case TensorProto_DataType_COMPLEX64:
-             element_size=8;
-             break;
-            }
-            size_t num_elements = (tensor->raw_data().size()) / element_size;
-            char *bytes = (char*)(tensor->mutable_raw_data()->c_str());
-
-           for (size_t i = 0; i < num_elements; ++i) {
-                char* start_byte = bytes + i * element_size;
-                char* end_byte = start_byte + element_size - 1;
-                /* keep swapping */
-                for (size_t count = 0; count < element_size / 2; ++count) {
-                    char temp = *start_byte;
-                    *start_byte = *end_byte;
-                    *end_byte = temp;
-                    ++start_byte;
-                    --end_byte;
-                }
-           }
+            ConveTens(tensor);
         }
     }
 
