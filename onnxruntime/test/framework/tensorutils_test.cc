@@ -30,27 +30,10 @@ void TestUnpackFloatTensor(TensorProto_DataType type, const Path& model_path) {
   for (int i = 0; i < 4; ++i) {
     memcpy(rawdata + i * sizeof(T), &(f[i]), sizeof(T));
   }
-  char* bytes = (char*)rawdata;
-  if (1) {
-#ifdef DEBUG_AIX
-         std::cout<<"Doing byte swapping in TestUnpackFloatTensor tensorutils_test.cc"<<std::endl;
-#endif
-         const size_t element_size = sizeof(T);
-         const size_t num_elements = 4;
-         for (size_t i = 0; i < num_elements; ++i) {
-             char* start_byte = bytes + i * element_size;
-             char* end_byte = start_byte + element_size - 1;
-             /* keep swapping */
-             for (size_t count = 0; count < element_size / 2; ++count) {
-                  char temp = *start_byte;
-                  *start_byte = *end_byte;
-                  *end_byte = temp;
-                  ++start_byte;
-                  --end_byte;
-             }
-         }
-  }
   float_tensor_proto.set_raw_data(rawdata, len);
+  if constexpr (endian::native != endian::little) {
+       utils::ConvertRawDataInTensorProto((ONNX_NAMESPACE::TensorProto*)&float_tensor_proto);
+  } 
   T float_data2[4];
   auto status = UnpackTensor(float_tensor_proto, model_path, float_data2, 4);
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();

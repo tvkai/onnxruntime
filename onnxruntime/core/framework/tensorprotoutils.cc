@@ -206,6 +206,7 @@ void ConvertRawDataInTensorProto(TensorProto* tensor)
              case TensorProto_DataType_UINT64:
              case TensorProto_DataType_INT64:
              case TensorProto_DataType_COMPLEX64:
+             case TensorProto_DataType_DOUBLE: 
              element_size=8;
              break;
             }
