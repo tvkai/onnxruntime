@@ -19,6 +19,9 @@ using namespace ONNX_NAMESPACE;
 using namespace onnxruntime::common;
 
 namespace onnxruntime {
+namespace utils {
+   void ConvertRawDataInTensorProto(ONNX_NAMESPACE::TensorProto* tensor); 
+}
 namespace test {
 
 struct NchwcTestHelper {
