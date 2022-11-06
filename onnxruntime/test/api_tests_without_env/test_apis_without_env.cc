@@ -17,6 +17,13 @@
 #include "core/session/onnxruntime_cxx_api.h"
 #include "core/session/abi_session_options_impl.h"
 
+std::unique_ptr<Ort::Env> ort_env;
+
+void ortenv_setup(){
+  OrtThreadingOptions tpo;
+  ort_env.reset(new Ort::Env(&tpo, ORT_LOGGING_LEVEL_WARNING, "Default"));
+}
+
 TEST(TestSessionOptions, SetIntraOpNumThreadsWithoutEnv) {
   Ort::SessionOptions session_options;
   session_options.SetIntraOpNumThreads(48);
@@ -26,6 +33,7 @@ TEST(TestSessionOptions, SetIntraOpNumThreadsWithoutEnv) {
 
 int main(int argc, char** argv) {
   int status = 0;
+  ortenv_setup();
   ORT_TRY {
     ::testing::InitGoogleTest(&argc, argv);
     status = RUN_ALL_TESTS();
@@ -36,6 +44,9 @@ int main(int argc, char** argv) {
       status = -1;
     });
   }
+
+  //TODO: Fix the C API issue
+  ort_env.reset();  //If we don't do this, it will crash          
 
 #ifndef USE_ONNXRUNTIME_DLL
   //make memory leak checker happy
