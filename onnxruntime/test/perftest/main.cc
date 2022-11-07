@@ -11,11 +11,19 @@
 using namespace onnxruntime;
 const OrtApi* g_ort = NULL;
 
+std::unique_ptr<Ort::Env> ort_env;
+
+void ortenv_setup(){
+  OrtThreadingOptions tpo;
+  ort_env.reset(new Ort::Env(&tpo, ORT_LOGGING_LEVEL_WARNING, "Default"));
+}
+
 #ifdef _WIN32
 int real_main(int argc, wchar_t* argv[]) {
 #else
 int real_main(int argc, char* argv[]) {
 #endif
+  ortenv_setup();
   g_ort = OrtGetApiBase()->GetApi(ORT_API_VERSION);
   perftest::PerformanceTestConfig test_config;
   if (!perftest::CommandLineParser::ParseArguments(test_config, argc, argv)) {

@@ -1076,16 +1076,16 @@ if (NOT onnxruntime_ENABLE_TRAINING_TORCH_INTEROP)
   file(GLOB onnxruntime_perf_test_src CONFIGURE_DEPENDS
     ${onnxruntime_perf_test_src_patterns}
     )
-#  onnxruntime_add_executable(onnxruntime_perf_test ${onnxruntime_perf_test_src} ${ONNXRUNTIME_ROOT}/core/platform/path_lib.cc)
+  onnxruntime_add_executable(onnxruntime_perf_test ${onnxruntime_perf_test_src} ${ONNXRUNTIME_ROOT}/core/platform/path_lib.cc)
   if(MSVC)
     target_compile_options(onnxruntime_perf_test PRIVATE "$<$<COMPILE_LANGUAGE:CUDA>:SHELL:--compiler-options /utf-8>"
             "$<$<NOT:$<COMPILE_LANGUAGE:CUDA>>:/utf-8>")
   endif()
-  #target_include_directories(onnxruntime_perf_test PRIVATE ${onnx_test_runner_src_dir} ${ONNXRUNTIME_ROOT}
-  #       ${eigen_INCLUDE_DIRS} ${onnxruntime_graph_header} ${onnxruntime_exec_src_dir}
-  #       ${CMAKE_CURRENT_BINARY_DIR})
+  target_include_directories(onnxruntime_perf_test PRIVATE ${onnx_test_runner_src_dir} ${ONNXRUNTIME_ROOT}
+         ${eigen_INCLUDE_DIRS} ${onnxruntime_graph_header} ${onnxruntime_exec_src_dir}
+         ${CMAKE_CURRENT_BINARY_DIR})
   if (onnxruntime_USE_ROCM)
-#    target_include_directories(onnxruntime_perf_test PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/amdgpu/onnxruntime ${CMAKE_CURRENT_BINARY_DIR}/amdgpu/orttraining)
+    target_include_directories(onnxruntime_perf_test PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/amdgpu/onnxruntime ${CMAKE_CURRENT_BINARY_DIR}/amdgpu/orttraining)
   endif()
   if (WIN32)
     target_compile_options(onnxruntime_perf_test PRIVATE ${disabled_warnings})
@@ -1100,11 +1100,20 @@ if (NOT onnxruntime_ENABLE_TRAINING_TORCH_INTEROP)
   endif()
 
   if (onnxruntime_BUILD_SHARED_LIB)
-    set(onnxruntime_perf_test_libs
-            onnx_test_runner_common onnxruntime_test_utils onnxruntime_common
-            onnxruntime onnxruntime_flatbuffers  onnx_test_data_proto
-            ${onnxruntime_EXTERNAL_LIBRARIES}
-            ${GETOPT_LIB_WIDE} ${SYS_PATH_LIB} ${CMAKE_DL_LIBS})
+    if(${CMAKE_SYSTEM_NAME} MATCHES "AIX")
+       #AIX To do - similar to issue 13554 where symbols expected to be defined though not used by AIX ld
+       set(onnxruntime_perf_test_libs
+              onnx_test_runner_common onnxruntime_test_utils onnxruntime_common
+              onnxruntime onnxruntime_flatbuffers  onnx_test_data_proto
+              ${onnxruntime_EXTERNAL_LIBRARIES} GTest::gtest
+              ${GETOPT_LIB_WIDE} ${SYS_PATH_LIB} ${CMAKE_DL_LIBS})
+    else()
+       set(onnxruntime_perf_test_libs
+              onnx_test_runner_common onnxruntime_test_utils onnxruntime_common
+              onnxruntime onnxruntime_flatbuffers  onnx_test_data_proto
+              ${onnxruntime_EXTERNAL_LIBRARIES}
+              ${GETOPT_LIB_WIDE} ${SYS_PATH_LIB} ${CMAKE_DL_LIBS})
+    endif()
     if(NOT WIN32)
       list(APPEND onnxruntime_perf_test_libs nsync_cpp)
       if(onnxruntime_USE_SNPE)
@@ -1114,7 +1123,7 @@ if (NOT onnxruntime_ENABLE_TRAINING_TORCH_INTEROP)
     if (CMAKE_SYSTEM_NAME STREQUAL "Android")
       list(APPEND onnxruntime_perf_test_libs ${android_shared_libs})
     endif()
-#    target_link_libraries(onnxruntime_perf_test PRIVATE ${onnxruntime_perf_test_libs} Threads::Threads)
+    target_link_libraries(onnxruntime_perf_test PRIVATE ${onnxruntime_perf_test_libs} Threads::Threads)
     if(WIN32)
       target_link_libraries(onnxruntime_perf_test PRIVATE debug dbghelp advapi32)
     endif()
@@ -1127,7 +1136,7 @@ if (NOT onnxruntime_ENABLE_TRAINING_TORCH_INTEROP)
   else()
     target_link_libraries(onnxruntime_perf_test PRIVATE onnx_test_runner_common ${GETOPT_LIB_WIDE} ${onnx_test_libs})
   endif()
-  #set_target_properties(onnxruntime_perf_test PROPERTIES FOLDER "ONNXRuntimeTest")
+  set_target_properties(onnxruntime_perf_test PROPERTIES FOLDER "ONNXRuntimeTest")
 
   if (onnxruntime_ENABLE_LANGUAGE_INTEROP_OPS AND NOT onnxruntime_BUILD_SHARED_LIB)
     target_link_libraries(onnxruntime_perf_test PRIVATE onnxruntime_language_interop onnxruntime_pyop)
