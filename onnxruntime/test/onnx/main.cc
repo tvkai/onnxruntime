@@ -26,7 +26,6 @@
 #include "nlohmann/json.hpp"
 
 using namespace onnxruntime;
-std::unique_ptr<Ort::Env> ort_env;
 
 namespace {
 void usage() {
