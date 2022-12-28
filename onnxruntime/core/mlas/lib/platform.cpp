@@ -20,8 +20,12 @@ Abstract:
 #include <thread>
 #include <mutex>
 
-#if defined(MLAS_TARGET_POWER) && defined(__linux__)
+#if defined(MLAS_TARGET_POWER) 
+#if defined(__linux__)
 #include <sys/auxv.h>
+#elif defined(_AIX)
+#include <sys/systemcfg.h>
+#endif
 #endif
 
 #if defined(MLAS_TARGET_ARM64)
@@ -412,8 +416,11 @@ Return Value:
 
 #if defined(__linux__)
     unsigned long hwcap2 = getauxval(AT_HWCAP2);
-
     bool HasP9Instructions = hwcap2 & PPC_FEATURE2_ARCH_3_00;
+#elif defined(_AIX)
+    bool HasP9Instructions = __power_9_andup();
+#endif // __linux__
+
     if (HasP9Instructions) {
         this->QuantizeLinearS8Kernel = MlasQuantizeLinearS8KernelVSX;
         this->QuantizeLinearU8Kernel = MlasQuantizeLinearU8KernelVSX;
@@ -422,7 +429,12 @@ Return Value:
 #if defined(POWER10)
 #if (defined(__GNUC__) && ((__GNUC__ > 10) || (__GNUC__== 10 && __GNUC_MINOR__ >= 2))) || \
     (defined(__clang__) && (__clang_major__ >= 12))
+#if defined(__linux__)
     bool HasP10Instructions = ((hwcap2 & PPC_FEATURE2_MMA) && (hwcap2 & PPC_FEATURE2_ARCH_3_1));
+#elif defined(_AIX)
+    bool HasP10Instructions = (__power_10_andup() && __power_mma_version() == MMA_V31);
+#endif // __linux__
+
     if (HasP10Instructions) {
         this->GemmFloatKernel = MlasSgemmKernelPOWER10;
         this->GemmDoubleKernel = MlasDgemmKernelPOWER10;
@@ -430,10 +442,7 @@ Return Value:
     }
 #endif
 #endif
-
-#endif // __linux__
 #endif // MLAS_TARGET_POWER
-
 }
 
 size_t
