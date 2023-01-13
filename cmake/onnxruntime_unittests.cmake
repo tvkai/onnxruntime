@@ -936,6 +936,10 @@ if (onnxruntime_USE_NUPHAR_TVM)
   endif()
 endif()
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "AIX")
+   target_link_options(onnx_test_runner PRIVATE "-Wl,-berok")
+endif()
+
 install(TARGETS onnx_test_runner
         ARCHIVE  DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY  DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -1099,6 +1103,10 @@ if (NOT onnxruntime_ENABLE_TRAINING_TORCH_INTEROP)
     )
   endif()
 
+  if (${CMAKE_SYSTEM_NAME} MATCHES "AIX")
+     target_link_options(onnxruntime_perf_test PRIVATE "-Wl,-berok")
+  endif()
+
   if (onnxruntime_BUILD_SHARED_LIB)
     set(onnxruntime_perf_test_libs
             onnx_test_runner_common onnxruntime_test_utils onnxruntime_common
@@ -1173,6 +1181,9 @@ if (NOT onnxruntime_ENABLE_TRAINING_TORCH_INTEROP)
       )
       target_compile_definitions(onnxruntime_shared_lib_test PRIVATE USE_DUMMY_EXA_DEMANGLE=1)
     endif()
+    if (${CMAKE_SYSTEM_NAME} MATCHES "AIX")
+        target_link_options(onnxruntime_shared_lib_test PRIVATE "-Wl,-berok")
+    endif()
     if (CMAKE_SYSTEM_NAME STREQUAL "iOS")
       add_custom_command(
         TARGET onnxruntime_shared_lib_test POST_BUILD
@@ -1189,6 +1200,9 @@ if (NOT onnxruntime_ENABLE_TRAINING_TORCH_INTEROP)
               LIBS ${onnxruntime_shared_lib_test_LIBS}
               DEPENDS ${all_dependencies}
       )
+    if (${CMAKE_SYSTEM_NAME} MATCHES "AIX")
+        target_link_options(onnxruntime_global_thread_pools_test PRIVATE "-Wl,-berok")
+    endif()
     endif()
 
   # A separate test is needed to test the APIs that don't rely on the env being created first.
@@ -1199,6 +1213,9 @@ if (NOT onnxruntime_ENABLE_TRAINING_TORCH_INTEROP)
               LIBS ${onnxruntime_shared_lib_test_LIBS}
               DEPENDS ${all_dependencies}
       )
+    if (${CMAKE_SYSTEM_NAME} MATCHES "AIX")
+        target_link_options(onnxruntime_api_tests_without_env PRIVATE "-Wl,-berok")
+    endif()
     endif()
   endif()
 
