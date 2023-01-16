@@ -3060,114 +3060,12 @@ SaveInputsOutputsToOrtFormat(flatbuffers::FlatBufferBuilder& builder, const std:
   return builder.CreateVector(vec);
 }
 
-void ConvTens(TensorProto* tensp)
-{
-    if (tensp->has_data_type())
-    {
-        switch(tensp->data_type())
-        {
-            case TensorProto_DataType_FLOAT:
-            {
-            float* fdata; 
-            char *bytes; 
-            if (tensp->has_raw_data())
-            {
-                bytes = (char*)(tensp->mutable_raw_data()->c_str()); 
-            }
-            else
-            {
-                fdata = (float*)(tensp->mutable_float_data()->mutable_data());
-                bytes = (char*)fdata;
-            }
-            /* ORT is little endian serialized always-tweak byte order if needed*/
-            if (1)
-            {
-                // std::cout<<"Doing byte swapping for little endian ORT graph.cc" << std::endl;
-                const size_t element_size = sizeof(float);
-                size_t num_elements;
-                if (tensp->has_raw_data())
-                {
-                    num_elements = tensp->raw_data().size() / element_size;
-                }
-                else
-                {
-                    num_elements = tensp->float_data_size();
-                }
-                for (size_t i = 0; i < num_elements; ++i) {
-                    char* start_byte = bytes + i * element_size;
-                    char* end_byte = start_byte + element_size - 1;
-                    /* keep swapping */
-                    for (size_t count = 0; count < element_size / 2; ++count) {
-                        char temp = *start_byte;
-                        *start_byte = *end_byte;
-                        *end_byte = temp;
-                        ++start_byte;
-                        --end_byte;
-                    }
-                }
-            }
-            break;
-            }
-
-            case TensorProto_DataType_INT64:
-            {
-            uint64_t* idata;
-            char *bytes;
-
-            if (tensp->has_raw_data())
-            {
-                bytes = (char*)(tensp->mutable_raw_data()->c_str());
-            }
-            else
-            {
-                idata = (uint64_t*)(tensp->mutable_int64_data()->mutable_data());
-                bytes = (char*)idata;
-            }
-
-            /* ORT is little endian serialized always-tweak byte order if needed*/
-            if (1)
-            {
-                // std::cout<<"Doing byte swapping for little endian ORT graph.cc" << std::endl;
-                const size_t element_size = sizeof(int64);
-                size_t num_elements;
-                if (tensp->has_raw_data())
-                {
-                    num_elements = tensp->raw_data().size() / element_size;
-                }
-                else
-                {
-                    num_elements = tensp->int64_data_size();
-                }
-                for (size_t i = 0; i < num_elements; ++i) {
-                    char* start_byte = bytes + i * element_size;
-                    char* end_byte = start_byte + element_size - 1;
-                    /* keep swapping */
-                    for (size_t count = 0; count < element_size / 2; ++count) {
-                        char temp = *start_byte;
-                        *start_byte = *end_byte;
-                        *end_byte = temp;
-                        ++start_byte;
-                        --end_byte;
-                    }
-                }
-            }
-
-            break;
-            }
-        }
-    }
-    else
-    {
-        std::cout << "No Data Type" << std::endl;
-    }
-}
-
 common::Status Graph::SaveToOrtFormat(flatbuffers::FlatBufferBuilder& builder,
                                       flatbuffers::Offset<fbs::Graph>& fbs_graph) const {
   auto& tens = GetAllInitializedTensors();
   for (auto& [name, tensor_p] : tens)
   {
-     ConvTens((TensorProto*)tensor_p);
+     utils::ConvertRawDataInTensorProto((TensorProto*)tensor_p);
   } 
   auto inputs = SaveInputsOutputsToOrtFormat(builder, graph_inputs_including_initializers_);
   auto outputs = SaveInputsOutputsToOrtFormat(builder, graph_outputs_);
