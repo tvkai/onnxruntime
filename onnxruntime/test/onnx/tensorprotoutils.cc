@@ -69,11 +69,9 @@ static void UnpackTensorWithRawData(const void* raw_data, size_t raw_data_length
     ORT_CXX_API_THROW(MakeString("UnpackTensor: the pre-allocated size does not match the raw data size, expected ",
                                  expected_size_in_bytes, ", got ", raw_data_length),
                       OrtErrorCode::ORT_FAIL);
-  char *nraw_data = (char*)malloc(raw_data_length);
   if constexpr (endian::native != endian::little) {
-    // ORT_CXX_API_THROW("UnpackTensorWithRawData only handles little-endian native byte order for now.",
-    //                  OrtErrorCode::ORT_NOT_IMPLEMENTED);
     /* Convert Endianness and copy */
+    char *nraw_data = (char*)malloc(raw_data_length);
     memcpy(nraw_data, raw_data, raw_data_length);
     char* bytes = nraw_data;
     size_t element_size = sizeof(T);
@@ -91,9 +89,13 @@ static void UnpackTensorWithRawData(const void* raw_data, size_t raw_data_length
             --end_byte;
         }
     }
+    memcpy(p_data, nraw_data, raw_data_length);
+    free(nraw_data);
   }
-  memcpy(p_data, nraw_data, raw_data_length);
-  free(nraw_data);
+  else
+  { 
+      memcpy(p_data, raw_data, raw_data_length);
+  } 
 }
 
 // This macro doesn't work for Float16/bool/string tensors
