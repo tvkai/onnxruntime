@@ -700,56 +700,10 @@ void OpTester::AddInitializers(onnxruntime::Graph& graph) {
       }
     } else {
       auto buffer_size = tensor.DataType()->Size() * shape.Size();
-#if 0
-      char* bytes = (char*)tensor.DataRaw();
-      /*onnx is little endian serialized always-tweak byte order if needed*/
-      if (1) {
-#ifdef DEBUG_AIX
-         std::cout<<"Doing byte swapping in Add Initializer provider_test_utils.cc"<<std::endl;
-#endif
-         const size_t element_size = tensor.DataType()->Size();
-         const size_t num_elements = shape.Size();
-         for (size_t i = 0; i < num_elements; ++i) {
-             char* start_byte = bytes + i * element_size;
-             char* end_byte = start_byte + element_size - 1;
-             /* keep swapping */
-             for (size_t count = 0; count < element_size / 2; ++count) {
-                  char temp = *start_byte;
-                  *start_byte = *end_byte;
-                  *end_byte = temp;
-                  ++start_byte;
-                  --end_byte;
-             }
-         }
-      }
-#endif
       tensor_proto.set_raw_data(tensor.DataRaw(), buffer_size);
       if constexpr (endian::native != endian::little) {
           ::onnxruntime::utils::ConvertRawDataInTensorProto((ONNX_NAMESPACE::TensorProto*)&tensor_proto);
       }
-#if 0
-      /* After copy restore it back */
-      /*onnx is little endian serialized always-tweak byte order if needed*/
-      if (1) {
-#ifdef DEBUG_AIX
-         std::cout<<"Doing byte swapping in Add Initializer provider_test_utils.cc"<<std::endl;
-#endif
-         const size_t element_size = tensor.DataType()->Size();
-         const size_t num_elements = shape.Size();
-         for (size_t i = 0; i < num_elements; ++i) {
-             char* start_byte = bytes + i * element_size;
-             char* end_byte = start_byte + element_size - 1;
-             /* keep swapping */
-             for (size_t count = 0; count < element_size / 2; ++count) {
-                  char temp = *start_byte;
-                  *start_byte = *end_byte;
-                  *end_byte = temp;
-                  ++start_byte;
-                  --end_byte;
-             }
-         }
-      }
-#endif
     }
     // 4. name
     tensor_proto.set_name(data.def_.Name());
