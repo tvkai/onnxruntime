@@ -108,24 +108,21 @@ std::vector<BFloat16> CreateValues<BFloat16>() {
 template <typename T>
 void WriteDataToFile(FILE* fp, const std::vector<T>& test_data) {
   char *bytes1 = (char *)test_data.data();
-  if (1) {
-#ifdef DEBUG_AIX
-         std::cout<<"Doing byte swapping in WriteDataToFile tensorutils_test.cc"<<std::endl;
-#endif
-         const size_t element_size = sizeof(T);
-         const size_t num_elements = test_data.size();
-         for (size_t i = 0; i < num_elements; ++i) {
-             char* start_byte = bytes1 + i * element_size;
-             char* end_byte = start_byte + element_size - 1;
-             /* keep swapping */
-             for (size_t count = 0; count < element_size / 2; ++count) {
-                  char temp = *start_byte;
-                  *start_byte = *end_byte;
-                  *end_byte = temp;
-                  ++start_byte;
-                  --end_byte;
-             }
+  if constexpr (endian::native != endian::little) {
+     const size_t element_size = sizeof(T);
+     const size_t num_elements = test_data.size();
+     for (size_t i = 0; i < num_elements; ++i) {
+         char* start_byte = bytes1 + i * element_size;
+         char* end_byte = start_byte + element_size - 1;
+         /* keep swapping */
+         for (size_t count = 0; count < element_size / 2; ++count) {
+             char temp = *start_byte;
+             *start_byte = *end_byte;
+             *end_byte = temp;
+             ++start_byte;
+             --end_byte;
          }
+     }
   }
   size_t size_in_bytes = test_data.size() * sizeof(T);
   ASSERT_EQ(size_in_bytes, fwrite(test_data.data(), 1, size_in_bytes, fp));
@@ -172,24 +169,21 @@ void UnpackAndValidate(const TensorProto& tensor_proto, const Path& model_path, 
   ASSERT_TRUE(st.IsOK()) << st.ErrorMessage();
 
   char *bytes1 = (char *)val.data();
-  if (1) {
-#ifdef DEBUG_AIX
-         std::cout<<"Doing byte swapping in WriteDataToFile UnpackAndValidate tensorutils_test.cc"<<std::endl;
-#endif
-         const size_t element_size = sizeof(T);
-         const size_t num_elements = test_data.size();
-         for (size_t i = 0; i < num_elements; ++i) {
-             char* start_byte = bytes1 + i * element_size;
-             char* end_byte = start_byte + element_size - 1;
-             /* keep swapping */
-             for (size_t count = 0; count < element_size / 2; ++count) {
-                  char temp = *start_byte;
-                  *start_byte = *end_byte;
-                  *end_byte = temp;
-                  ++start_byte;
-                  --end_byte;
-             }
+  if constexpr (endian::native != endian::little) {
+     const size_t element_size = sizeof(T);
+     const size_t num_elements = test_data.size();
+     for (size_t i = 0; i < num_elements; ++i) {
+         char* start_byte = bytes1 + i * element_size;
+         char* end_byte = start_byte + element_size - 1;
+         /* keep swapping */
+         for (size_t count = 0; count < element_size / 2; ++count) {
+              char temp = *start_byte;
+              *start_byte = *end_byte;
+              *end_byte = temp;
+              ++start_byte;
+              --end_byte;
          }
+     }
   }
 
   // Validate data
@@ -371,24 +365,21 @@ static void TestConstantNodeConversionWithExternalData(TensorProto_DataType type
   ASSERT_TRUE(st.IsOK()) << st.ErrorMessage();
 
   char *bytes1 = (char *)val.data();
-  if (1) {
-#ifdef DEBUG_AIX
-         std::cout<<"Doing byte swapping in TestConstantNodeConversionWithExternalData tensorutils_test.cc"<<std::endl;
-#endif
-         const size_t element_size = sizeof(T);
-         const size_t num_elements = test_data.size();
-         for (size_t i = 0; i < num_elements; ++i) {
-             char* start_byte = bytes1 + i * element_size;
-             char* end_byte = start_byte + element_size - 1;
-             /* keep swapping */
-             for (size_t count = 0; count < element_size / 2; ++count) {
-                  char temp = *start_byte;
-                  *start_byte = *end_byte;
-                  *end_byte = temp;
-                  ++start_byte;
-                  --end_byte;
-             }
+  if constexpr (endian::native != endian::little) {
+     const size_t element_size = sizeof(T);
+     const size_t num_elements = test_data.size();
+     for (size_t i = 0; i < num_elements; ++i) {
+         char* start_byte = bytes1 + i * element_size;
+         char* end_byte = start_byte + element_size - 1;
+         /* keep swapping */
+         for (size_t count = 0; count < element_size / 2; ++count) {
+              char temp = *start_byte;
+              *start_byte = *end_byte;
+              *end_byte = temp;
+              ++start_byte;
+              --end_byte;
          }
+     }
   }
 
   for (size_t i = 0; i < test_data.size(); i++) {

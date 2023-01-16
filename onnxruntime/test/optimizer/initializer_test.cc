@@ -163,6 +163,7 @@ void TestInitializerRawData() {
   tensor_proto.set_name("OptimizerInitializerTest_RawData");
   tensor_proto.add_dims(3);
   tensor_proto.add_dims(4);
+#if 0
   char* bytes = (char*)data.data();
   /*onnx is little endian serialized always-tweak byte order if needed*/
   if (1) {
@@ -184,12 +185,16 @@ void TestInitializerRawData() {
              }
          }
   }
+#endif
   tensor_proto.set_raw_data(data.data(), data.size() * sizeof(T));
+  if constexpr (endian::native != endian::little) {
+       utils::ConvertRawDataInTensorProto((ONNX_NAMESPACE::TensorProto *) &tensor_proto);
+  }
 
   const Initializer init(tensor_proto, Path());
 
   for (size_t idx = 0; idx < data.size(); idx++) {
-    EXPECT_EQ(data1[idx], init.data<T>()[idx]);
+    EXPECT_EQ(data[idx], init.data<T>()[idx]);
   }
 }
 
