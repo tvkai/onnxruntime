@@ -11,6 +11,7 @@
 #include "core/framework/framework_common.h"
 #include "core/optimizer/graph_transformer_level.h"
 #include "core/graph/onnx_protobuf.h"
+#include "core/framework/tensorprotoutils.h"
 #include "test/framework/test_utils.h"
 #include "test/common/tensor_op_test_utils.h"
 #include "test/framework/test_utils.h"
@@ -103,53 +104,12 @@ class ModelTestBuilder {
     tensor_proto.set_name(name);
     tensor_proto.set_data_type(utils::ToTensorProtoElementType<T>());
     char* bytes = (char*)data.data();
-    /*onnx is little endian serialized always-tweak byte order if needed*/
-    if (1) {
-        const size_t element_size = sizeof(T);
-        const size_t num_elements = data.size();
-
-#ifdef DEBUG_AIX
-        std::cout<<"Doing byte swapping in MakeInitializer graph_transform_test_builder.h "<<"num_elements "<<num_elements<<"element_size "<<element_size<<std::endl;
-#endif
-         for (size_t i = 0; i < num_elements; ++i) {
-             char* start_byte = bytes + i * element_size;
-             char* end_byte = start_byte + element_size - 1;
-             /* keep swapping */
-             for (size_t count = 0; count < element_size / 2; ++count) {
-                  char temp = *start_byte;
-                  *start_byte = *end_byte;
-                  *end_byte = temp;
-                  ++start_byte;
-                  --end_byte;
-             }
-         }
-
-      }
-
     tensor_proto.set_raw_data(data.data(), data.size() * sizeof(T));
 
-    if (1) {
-        const size_t element_size = sizeof(T);
-        const size_t num_elements = data.size();
-
-#ifdef DEBUG_AIX
-        std::cout<<"Doing byte swapping in MakeInitializer graph_transform_test_builder.h "<<"num_elements "<<num_elements<<"element_size "<<element_size<<std::endl;
-#endif
-         for (size_t i = 0; i < num_elements; ++i) {
-             char* start_byte = bytes + i * element_size;
-             char* end_byte = start_byte + element_size - 1;
-             /* keep swapping */
-             for (size_t count = 0; count < element_size / 2; ++count) {
-                  char temp = *start_byte;
-                  *start_byte = *end_byte;
-                  *end_byte = temp;
-                  ++start_byte;
-                  --end_byte;
-             }
-         }
-
-      }
-    
+    if (endian::native != endian::little)
+    {
+        ::onnxruntime::utils::ConvertRawDataInTensorProto(&tensor_proto);
+    }
 
     for (auto& dim : shape) {
       tensor_proto.add_dims(dim);
