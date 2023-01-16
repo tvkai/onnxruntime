@@ -700,6 +700,7 @@ void OpTester::AddInitializers(onnxruntime::Graph& graph) {
       }
     } else {
       auto buffer_size = tensor.DataType()->Size() * shape.Size();
+#if 0
       char* bytes = (char*)tensor.DataRaw();
       /*onnx is little endian serialized always-tweak byte order if needed*/
       if (1) {
@@ -721,7 +722,12 @@ void OpTester::AddInitializers(onnxruntime::Graph& graph) {
              }
          }
       }
+#endif
       tensor_proto.set_raw_data(tensor.DataRaw(), buffer_size);
+      if constexpr (endian::native != endian::little) {
+          ::onnxruntime::utils::ConvertRawDataInTensorProto((ONNX_NAMESPACE::TensorProto*)&tensor_proto);
+      }
+#if 0
       /* After copy restore it back */
       /*onnx is little endian serialized always-tweak byte order if needed*/
       if (1) {
@@ -743,6 +749,7 @@ void OpTester::AddInitializers(onnxruntime::Graph& graph) {
              }
          }
       }
+#endif
     }
     // 4. name
     tensor_proto.set_name(data.def_.Name());
