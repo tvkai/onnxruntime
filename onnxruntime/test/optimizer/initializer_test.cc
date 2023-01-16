@@ -156,36 +156,12 @@ std::vector<BFloat16> GetInitializerData<BFloat16>() {
 template <typename T>
 void TestInitializerRawData() {
   std::vector<T> data = GetInitializerData<T>();
-  std::vector<T> data1 = GetInitializerData<T>();
 
   ONNX_NAMESPACE::TensorProto tensor_proto;
   tensor_proto.set_data_type(GetTensorProtoDataType<T>());
   tensor_proto.set_name("OptimizerInitializerTest_RawData");
   tensor_proto.add_dims(3);
   tensor_proto.add_dims(4);
-#if 0
-  char* bytes = (char*)data.data();
-  /*onnx is little endian serialized always-tweak byte order if needed*/
-  if (1) {
-#ifdef DEBUG_AIX
-         std::cout<<"Doing byte swapping in TestInitializerRawData initializer_test.cc "<<std::endl;
-#endif
-         const size_t element_size = sizeof(T);
-         const size_t num_elements = data.size();
-         for (size_t i = 0; i < num_elements; ++i) {
-             char* start_byte = bytes + i * element_size;
-             char* end_byte = start_byte + element_size - 1;
-             /* keep swapping */
-             for (size_t count = 0; count < element_size / 2; ++count) {
-                  char temp = *start_byte;
-                  *start_byte = *end_byte;
-                  *end_byte = temp;
-                  ++start_byte;
-                  --end_byte;
-             }
-         }
-  }
-#endif
   tensor_proto.set_raw_data(data.data(), data.size() * sizeof(T));
   if constexpr (endian::native != endian::little) {
        utils::ConvertRawDataInTensorProto((ONNX_NAMESPACE::TensorProto *) &tensor_proto);

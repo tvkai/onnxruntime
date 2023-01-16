@@ -6,6 +6,7 @@
 #include "core/mlas/inc/mlas.h"
 #include "core/session/environment.h"
 #include "core/session/inference_session.h"
+#include "core/framework/tensorprotoutils.h"
 #include "test/compare_ortvalue.h"
 #include "test/test_environment.h"
 #include "test/framework/test_utils.h"
@@ -15,13 +16,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace ONNX_NAMESPACE;
-using namespace onnxruntime::common;
-
 namespace onnxruntime {
-namespace utils {
-   void ConvertRawDataInTensorProto(ONNX_NAMESPACE::TensorProto* tensor); 
-}
 namespace test {
 
 struct NchwcTestHelper {
@@ -75,7 +70,7 @@ struct NchwcTestHelper {
     }
 
     if constexpr (endian::native != endian::little) {
-       utils::ConvertRawDataInTensorProto((ONNX_NAMESPACE::TensorProto*)&tensor_proto);
+       ::onnxruntime::utils::ConvertRawDataInTensorProto((ONNX_NAMESPACE::TensorProto*)&tensor_proto);
     } 
 
     graph_.AddInitializedTensor(tensor_proto);
