@@ -60,11 +60,31 @@ inline uint64_t rotl64(uint64_t x, int8_t r) {
 // handle aligned reads, do the conversion here
 
 FORCE_INLINE uint32_t getblock(const uint32_t* p, int i) {
-  return p[i];
+  if constexpr (onnxruntime::endian::native == onnxruntime::endian::little) {
+    return p[i];
+  } else {
+    const uint8_t* c = (const uint8_t*)&p[i];
+    return (uint32_t)c[0] |
+           (uint32_t)c[1] << 8 |
+           (uint32_t)c[2] << 16 |
+           (uint32_t)c[3] << 24;
+  }
 }
 
 FORCE_INLINE uint64_t getblock(const uint64_t* p, int i) {
-  return p[i];
+  if constexpr (onnxruntime::endian::native == onnxruntime::endian::little) {
+    return p[i];
+  } else {
+    const uint8_t* c = (const uint8_t*)&p[i];
+    return (uint64_t)c[0] |
+           (uint64_t)c[1] << 8 |
+           (uint64_t)c[2] << 16 |
+           (uint64_t)c[3] << 24 |
+           (uint64_t)c[4] << 32 |
+           (uint64_t)c[5] << 40 |
+           (uint64_t)c[6] << 48 |
+           (uint64_t)c[7] << 56;
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -205,13 +225,35 @@ Status MurmurHash3::Compute(OpKernelContext* ctx) const {
     ORT_ENFORCE(input_num_bytes % 4 == 0);
     const auto input_end = input + input_count * input_num_bytes;
     while (input != input_end) {
-      MurmurHash3_x86_32(input,
-                         input_num_bytes,
-                         seed_,
-                         output);
-      input += input_num_bytes;
-      ++output;
-    }
+      if constexpr (onnxruntime::endian::native == onnxruntime::endian::little)  {
+         MurmurHash3_x86_32(input,
+                            input_num_bytes,
+                            seed_,
+                            output);
+      }
+      else {
+         std::cout<<"Doing Byte Swapping ..input_num_bytes is "<<input_num_bytes;   
+         char *input_cp = (char *)malloc(input_num_bytes); 
+         memcpy(input_cp, input, input_num_bytes);
+         char* start_byte = input_cp;
+         char* end_byte = start_byte + input_num_bytes - 1;
+         /* Keep swapping */
+         for (int count = 0; count < input_num_bytes/2; ++count) {
+           char temp = *start_byte;
+           *start_byte = *end_byte;
+           *end_byte = temp;
+           ++start_byte;
+           --end_byte;
+        }
+        MurmurHash3_x86_32(input_cp,
+                           input_num_bytes,
+                           seed_,
+                           output);
+        free(input_cp);
+     }
+     input += input_num_bytes;
+     ++output;
+   }
   }
   return Status::OK();
 }

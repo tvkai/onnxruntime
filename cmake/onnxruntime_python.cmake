@@ -128,9 +128,9 @@ if(APPLE)
   set(ONNXRUNTIME_SO_LINK_FLAG "-Xlinker -exported_symbols_list ${ONNXRUNTIME_ROOT}/python/exported_symbols.lst")
 elseif(UNIX)
   if (onnxruntime_ENABLE_EXTERNAL_CUSTOM_OP_SCHEMAS)
-    set(ONNXRUNTIME_SO_LINK_FLAG "-Xlinker --version-script=${ONNXRUNTIME_ROOT}/python/version_script_expose_onnx_protobuf.lds -Xlinker --gc-sections")
+    #set(ONNXRUNTIME_SO_LINK_FLAG "-Xlinker --version-script=${ONNXRUNTIME_ROOT}/python/version_script_expose_onnx_protobuf.lds -Xlinker --gc-sections")
   else()
-    set(ONNXRUNTIME_SO_LINK_FLAG "-Xlinker --version-script=${ONNXRUNTIME_ROOT}/python/version_script.lds -Xlinker --gc-sections")
+    #set(ONNXRUNTIME_SO_LINK_FLAG "-Xlinker --version-script=${ONNXRUNTIME_ROOT}/python/version_script.lds -Xlinker --gc-sections")
   endif()
 else()
   set(ONNXRUNTIME_SO_LINK_FLAG "-DEF:${ONNXRUNTIME_ROOT}/python/pybind.def")
@@ -143,6 +143,7 @@ endif()
 
 if (onnxruntime_ENABLE_TRAINING)
   target_include_directories(onnxruntime_pybind11_state PRIVATE ${ORTTRAINING_ROOT})
+  target_include_directories(onnxruntime_pybind11_state PRIVATE ${PROJECT_SOURCE_DIR}/external/dlpack/include)
   target_link_libraries(onnxruntime_pybind11_state PRIVATE onnxruntime_training)
 endif()
 
@@ -223,6 +224,8 @@ target_link_libraries(onnxruntime_pybind11_state PRIVATE
     onnxruntime_common
     onnxruntime_flatbuffers
     ${pybind11_lib}
+    iconv
+    python3.7m
 )
 
 if (onnxruntime_ENABLE_LANGUAGE_INTEROP_OPS)
@@ -247,7 +250,7 @@ elseif (APPLE)
     BUILD_WITH_INSTALL_RPATH TRUE
     INSTALL_RPATH_USE_LINK_PATH FALSE)
 else()
-  set_property(TARGET onnxruntime_pybind11_state APPEND_STRING PROPERTY LINK_FLAGS " -Xlinker -rpath=\\$ORIGIN")
+  #set_property(TARGET onnxruntime_pybind11_state APPEND_STRING PROPERTY LINK_FLAGS " -Xlinker -rpath=\\$ORIGIN")
 endif()
 
 if (onnxruntime_ENABLE_EXTERNAL_CUSTOM_OP_SCHEMAS)

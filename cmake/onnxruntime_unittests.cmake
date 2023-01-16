@@ -13,6 +13,10 @@ if (onnxruntime_USE_TVM)
   list(APPEND TEST_INC_DIR ${TVM_INCLUDES})
 endif()
 
+if(${CMAKE_SYSTEM_NAME} MATCHES "AIX")
+  list(APPEND TEST_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/onnx")
+endif()
+
 set(disabled_warnings)
 function(AddTest)
   cmake_parse_arguments(_UT "DYN" "TARGET" "LIBS;SOURCES;DEPENDS;TEST_ARGS" ${ARGN})
@@ -98,6 +102,9 @@ function(AddTest)
     target_compile_options(${_UT_TARGET} PRIVATE "$<$<COMPILE_LANGUAGE:CUDA>:SHELL:-Xcompiler -Wno-error=sign-compare>"
             "$<$<NOT:$<COMPILE_LANGUAGE:CUDA>>:-Wno-error=sign-compare>")
     target_compile_options(${_UT_TARGET} PRIVATE "-Wno-error=uninitialized")
+    if(${CMAKE_SYSTEM_NAME} MATCHES "AIX")
+      target_compile_options(${_UT_TARGET} PRIVATE "-Wno-error") 
+    endif()
   endif()
 
   set(TEST_ARGS ${_UT_TEST_ARGS})
@@ -512,32 +519,63 @@ if (onnxruntime_ENABLE_LANGUAGE_INTEROP_OPS)
   set(ONNXRUNTIME_INTEROP_TEST_LIBS PRIVATE onnxruntime_language_interop onnxruntime_pyop)
 endif()
 
-set(ONNXRUNTIME_TEST_LIBS
-    onnxruntime_session
-    ${ONNXRUNTIME_INTEROP_TEST_LIBS}
-    ${onnxruntime_libs}
-    # CUDA, ROCM, TENSORRT, MIGRAPHX, DNNL, and OpenVINO are dynamically loaded at runtime
-    ${PROVIDERS_NNAPI}
-    ${PROVIDERS_SNPE}
-    ${PROVIDERS_RKNPU}
-    ${PROVIDERS_DML}
-    ${PROVIDERS_ACL}
-    ${PROVIDERS_ARMNN}
-    ${PROVIDERS_COREML}
-    # ${PROVIDERS_TVM}
-    ${PROVIDERS_XNNPACK}
-    ${PROVIDERS_AZURE}
-    onnxruntime_optimizer
-    onnxruntime_providers
-    onnxruntime_util
-    ${onnxruntime_tvm_libs}
-    onnxruntime_framework
-    onnxruntime_util
-    onnxruntime_graph
-    ${ONNXRUNTIME_MLAS_LIBS}
-    onnxruntime_common
-    onnxruntime_flatbuffers
-)
+if(${CMAKE_SYSTEM_NAME} MATCHES "AIX")
+  set(ONNXRUNTIME_TEST_LIBS
+      onnxruntime_session
+      ${ONNXRUNTIME_INTEROP_TEST_LIBS}
+      ${onnxruntime_libs}
+      # CUDA, ROCM, TENSORRT, MIGRAPHX, DNNL, and OpenVINO are dynamically loaded at runtime
+      ${PROVIDERS_NUPHAR}
+      ${PROVIDERS_NNAPI}
+      ${PROVIDERS_SNPE}
+      ${PROVIDERS_RKNPU}
+      ${PROVIDERS_DML}
+      ${PROVIDERS_ACL}
+      ${PROVIDERS_ARMNN}
+      ${PROVIDERS_COREML}
+      # ${PROVIDERS_TVM}
+      ${PROVIDERS_XNNPACK}
+      onnxruntime_optimizer
+      onnxruntime_providers
+      onnxruntime_util
+      ${onnxruntime_tvm_libs}
+      onnxruntime_framework
+      onnxruntime_util
+      onnxruntime_graph
+      ${ONNXRUNTIME_MLAS_LIBS}
+      onnxruntime_common
+      onnxruntime_flatbuffers
+      iconv
+      gtest
+  )
+else()
+  set(ONNXRUNTIME_TEST_LIBS
+      onnxruntime_session
+      ${ONNXRUNTIME_INTEROP_TEST_LIBS}
+      ${onnxruntime_libs}
+      # CUDA, ROCM, TENSORRT, MIGRAPHX, DNNL, and OpenVINO are dynamically loaded at runtime
+      ${PROVIDERS_NUPHAR}
+      ${PROVIDERS_NNAPI}
+      ${PROVIDERS_SNPE}
+      ${PROVIDERS_RKNPU}
+      ${PROVIDERS_DML}
+      ${PROVIDERS_ACL}
+      ${PROVIDERS_ARMNN}
+      ${PROVIDERS_COREML}
+      # ${PROVIDERS_TVM}
+      ${PROVIDERS_XNNPACK}
+      onnxruntime_optimizer
+      onnxruntime_providers
+      onnxruntime_util
+      ${onnxruntime_tvm_libs}
+      onnxruntime_framework
+      onnxruntime_util
+      onnxruntime_graph
+      ${ONNXRUNTIME_MLAS_LIBS}
+      onnxruntime_common
+      onnxruntime_flatbuffers
+  )
+endif()
 
 if (onnxruntime_ENABLE_TRAINING)
   set(ONNXRUNTIME_TEST_LIBS onnxruntime_training_runner onnxruntime_training ${ONNXRUNTIME_TEST_LIBS})
@@ -773,6 +811,14 @@ if (MSVC AND onnxruntime_ENABLE_STATIC_ANALYSIS)
 target_compile_options(onnxruntime_test_all PRIVATE  "/analyze:stacksize 131072")
 endif()
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "AIX")
+  target_link_options(onnxruntime_test_all PRIVATE "-Wl,-bkeepfile:CMakeFiles/onnxruntime_test_all.dir${TEST_SRC_DIR}/common/logging/logging_test.cc.o")
+  target_link_options(onnxruntime_test_all PRIVATE "-Wl,-bkeepfile:CMakeFiles/onnxruntime_test_all.dir${TEST_SRC_DIR}/common/logging/sinks_test.cc.o")
+  target_link_options(onnxruntime_test_all PRIVATE "-Wl,-bkeepfile:CMakeFiles/onnxruntime_test_all.dir${TEST_SRC_DIR}/quantization/quantization_test.cc.o")
+  target_link_options(onnxruntime_test_all PRIVATE "-Wl,-bkeepfile:CMakeFiles/onnxruntime_test_all.dir${TEST_SRC_DIR}/framework/tensor_test.cc.o")
+  target_link_options(onnxruntime_test_all PRIVATE "-Wl,-bkeepfile:CMakeFiles/onnxruntime_test_all.dir${TEST_SRC_DIR}/framework/bfc_arena_test.cc.o")
+endif()
+
 # the default logger tests conflict with the need to have an overall default logger
 # so skip in this type of
 target_compile_definitions(onnxruntime_test_all PUBLIC -DSKIP_DEFAULT_LOGGER_TESTS)
@@ -934,6 +980,10 @@ if (onnxruntime_USE_TVM)
   if (WIN32)
     target_link_options(onnx_test_runner PRIVATE "/STACK:4000000")
   endif()
+endif()
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "AIX")
+   target_link_options(onnx_test_runner PRIVATE "-Wl,-berok")
 endif()
 
 install(TARGETS onnx_test_runner
@@ -1104,6 +1154,10 @@ if (NOT onnxruntime_ENABLE_TRAINING_TORCH_INTEROP)
     )
   endif()
 
+  if (${CMAKE_SYSTEM_NAME} MATCHES "AIX")
+     target_link_options(onnxruntime_perf_test PRIVATE "-Wl,-berok")
+  endif()
+
   if (onnxruntime_BUILD_SHARED_LIB)
     #It will dynamically link to onnxruntime. So please don't add onxruntime_graph/onxruntime_framework/... here.
     #onnxruntime_common is kind of ok because it is thin, tiny and totally stateless.
@@ -1168,6 +1222,10 @@ if (NOT onnxruntime_ENABLE_TRAINING_TORCH_INTEROP)
     if (CMAKE_SYSTEM_NAME STREQUAL "Android")
       list(APPEND onnxruntime_shared_lib_test_LIBS ${android_shared_libs})
     endif()
+    #AIX To do - similar to issue 13554 where symbols expected to be defined though not used by AIX ld
+    if(${CMAKE_SYSTEM_NAME} MATCHES "AIX")
+       list(APPEND onnxruntime_shared_lib_test_LIBS onnxruntime_graph onnxruntime_session onnxruntime_providers onnxruntime_framework onnxruntime_util onnxruntime_mlas onnxruntime_optimizer onnxruntime_flatbuffers iconv re2)
+    endif()
 
     AddTest(DYN
             TARGET onnxruntime_shared_lib_test
@@ -1184,6 +1242,9 @@ if (NOT onnxruntime_ENABLE_TRAINING_TORCH_INTEROP)
       target_compile_definitions(onnxruntime_shared_lib_test PRIVATE USE_DUMMY_EXA_DEMANGLE=1)
     endif()
 
+    if (${CMAKE_SYSTEM_NAME} MATCHES "AIX")
+        target_link_options(onnxruntime_shared_lib_test PRIVATE "-Wl,-berok")
+    endif()
     if (CMAKE_SYSTEM_NAME STREQUAL "iOS")
       add_custom_command(
         TARGET onnxruntime_shared_lib_test POST_BUILD
@@ -1200,6 +1261,9 @@ if (NOT onnxruntime_ENABLE_TRAINING_TORCH_INTEROP)
               LIBS ${onnxruntime_shared_lib_test_LIBS}
               DEPENDS ${all_dependencies}
       )
+    if (${CMAKE_SYSTEM_NAME} MATCHES "AIX")
+        target_link_options(onnxruntime_global_thread_pools_test PRIVATE "-Wl,-berok")
+    endif()
     endif()
 
   # A separate test is needed to test the APIs that don't rely on the env being created first.
@@ -1210,6 +1274,9 @@ if (NOT onnxruntime_ENABLE_TRAINING_TORCH_INTEROP)
               LIBS ${onnxruntime_shared_lib_test_LIBS}
               DEPENDS ${all_dependencies}
       )
+    if (${CMAKE_SYSTEM_NAME} MATCHES "AIX")
+        target_link_options(onnxruntime_api_tests_without_env PRIVATE "-Wl,-berok")
+    endif()
     endif()
   endif()
 
@@ -1368,7 +1435,7 @@ if (NOT onnxruntime_BUILD_WEBASSEMBLY)
   if(UNIX)
     if (APPLE)
       set(ONNXRUNTIME_CUSTOM_OP_LIB_LINK_FLAG "-Xlinker -dead_strip")
-    else()
+    elseif(NOT ${CMAKE_SYSTEM_NAME} MATCHES "AIX")
       set(ONNXRUNTIME_CUSTOM_OP_LIB_LINK_FLAG "-Xlinker --version-script=${TEST_SRC_DIR}/testdata/custom_op_library/custom_op_library.lds -Xlinker --no-undefined -Xlinker --gc-sections -z noexecstack")
     endif()
   else()
@@ -1484,7 +1551,11 @@ if (NOT onnxruntime_MINIMAL_BUILD AND NOT onnxruntime_EXTENDED_MINIMAL_BUILD
   if(APPLE)
     set_property(TARGET test_execution_provider APPEND_STRING PROPERTY LINK_FLAGS "-Xlinker -exported_symbols_list ${REPO_ROOT}/onnxruntime/test/testdata/custom_execution_provider_library/exported_symbols.lst")
   elseif(UNIX)
-    set_property(TARGET test_execution_provider APPEND_STRING PROPERTY LINK_FLAGS "-Xlinker --version-script=${REPO_ROOT}/onnxruntime/test/testdata/custom_execution_provider_library/version_script.lds -Xlinker --gc-sections -Xlinker -rpath=\\$ORIGIN")
+     if(${CMAKE_SYSTEM_NAME} MATCHES "AIX")
+       set_property(TARGET test_execution_provider APPEND_STRING PROPERTY LINK_FLAGS "-Xlinker -bE:${REPO_ROOT}/onnxruntime/test/testdata/custom_execution_provider_library/symbols.exp")
+     else()
+       set_property(TARGET test_execution_provider APPEND_STRING PROPERTY LINK_FLAGS "-Xlinker --version-script=${REPO_ROOT}/onnxruntime/test/testdata/custom_execution_provider_library/version_script.lds -Xlinker --gc-sections -Xlinker -rpath=\\$ORIGIN")
+     endif()
   elseif(WIN32)
     set_property(TARGET test_execution_provider APPEND_STRING PROPERTY LINK_FLAGS "-DEF:${REPO_ROOT}/onnxruntime/test/testdata/custom_execution_provider_library/symbols.def")
   else()
