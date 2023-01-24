@@ -478,6 +478,7 @@ Return Value:
 #if defined(POWER10)
 #if (defined(__GNUC__) && ((__GNUC__ > 10) || (__GNUC__== 10 && __GNUC_MINOR__ >= 2))) || \
     (defined(__clang__) && (__clang_major__ >= 12))
+#if defined(__linux__)
     bool HasP10Instructions = ((hwcap2 & PPC_FEATURE2_MMA) && (hwcap2 & PPC_FEATURE2_ARCH_3_1));
 #elif defined(_AIX)
     bool HasP10Instructions = (__power_10_andup() && __power_mma_version() == MMA_V31);
@@ -538,7 +539,11 @@ MlasPlatformU8S8Overflow(
 
 #endif
 
+#if defined(_AIX)
+__thread size_t ThreadedBufSize = 0;
+#else
 thread_local size_t ThreadedBufSize = 0;
+#endif
 #ifdef _MSC_VER
 thread_local std::unique_ptr<uint8_t, decltype(&_aligned_free)> ThreadedBufHolder(nullptr, &_aligned_free);
 #else

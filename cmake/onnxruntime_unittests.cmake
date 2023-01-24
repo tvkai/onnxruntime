@@ -1491,6 +1491,9 @@ if (NOT onnxruntime_BUILD_WEBASSEMBLY)
             LIBS ${onnxruntime_customopregistration_test_LIBS}
             DEPENDS ${all_dependencies}
     )
+    if(${CMAKE_SYSTEM_NAME} MATCHES "AIX")
+       target_link_options(onnxruntime_customopregistration_test PRIVATE "-Wl,-berok")
+    endif()
 
     if (CMAKE_SYSTEM_NAME STREQUAL "iOS")
       add_custom_command(
@@ -1512,7 +1515,7 @@ if (NOT onnxruntime_BUILD_WEBASSEMBLY AND (NOT onnxruntime_MINIMAL_BUILD OR onnx
   if(UNIX)
     if (APPLE)
       set(ONNXRUNTIME_CUSTOM_OP_INVALID_LIB_LINK_FLAG "-Xlinker -dead_strip")
-    else()
+    elseif(NOT ${CMAKE_SYSTEM_NAME} MATCHES "AIX")
       string(CONCAT ONNXRUNTIME_CUSTOM_OP_INVALID_LIB_LINK_FLAG
              "-Xlinker --version-script=${TEST_SRC_DIR}/testdata/custom_op_invalid_library/custom_op_library.lds "
              "-Xlinker --no-undefined -Xlinker --gc-sections -z noexecstack")
