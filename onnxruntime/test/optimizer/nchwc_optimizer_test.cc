@@ -6,6 +6,7 @@
 #include "core/mlas/inc/mlas.h"
 #include "core/session/environment.h"
 #include "core/session/inference_session.h"
+#include "core/framework/tensorprotoutils.h"
 #include "test/compare_ortvalue.h"
 #include "test/test_environment.h"
 #include "test/framework/test_utils.h"
@@ -67,6 +68,10 @@ struct NchwcTestHelper {
     for (auto& dim : shape) {
       tensor_proto.add_dims(dim);
     }
+
+    if constexpr (endian::native != endian::little) {
+       ::onnxruntime::utils::ConvertRawDataInTensorProto((ONNX_NAMESPACE::TensorProto*)&tensor_proto);
+    } 
 
     graph_.AddInitializedTensor(tensor_proto);
 

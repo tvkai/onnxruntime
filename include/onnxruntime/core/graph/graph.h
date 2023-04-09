@@ -31,6 +31,7 @@
 
 #include "core/common/gsl.h"
 
+#include "core/framework/ort_value.h"
 #include "core/common/common.h"
 #include "core/common/const_pointer_container.h"
 #include "core/common/inlined_containers_fwd.h"

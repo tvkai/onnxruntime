@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include "core/common/gsl.h"
+#include "core/framework/ort_value.h"
 #include "core/common/inlined_containers.h"
 #include "core/session/onnxruntime_c_api.h"
 #include "core/optimizer/graph_transformer_level.h"

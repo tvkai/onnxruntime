@@ -1307,7 +1307,7 @@ class TestInferenceSession(unittest.TestCase):
         )
 
     def testMemoryArenaShrinkage(self):  # noqa: N802
-        if platform.architecture()[0] == "32bit" or "ppc" in platform.machine() or "powerpc" in platform.machine():
+        if platform.architecture()[0] == "32bit" or "ppc" in platform.machine() or "powerpc" in platform.machine() or "powerpc" in platform.processor():
             # on x86 or ppc builds, the CPU allocator does not use an arena
             print("Skipping testMemoryArenaShrinkage in 32bit or powerpc platform.")
         else:

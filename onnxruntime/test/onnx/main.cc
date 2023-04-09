@@ -9,7 +9,7 @@
 #ifdef _WIN32
 #include "getopt.h"
 #else
-#include <getopt.h>
+// #include <getopt.h>
 #include <thread>
 #endif
 #include "TestResultStat.h"

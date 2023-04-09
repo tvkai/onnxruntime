@@ -110,6 +110,8 @@ target_compile_definitions(onnxruntime PRIVATE FILE_NAME=\"onnxruntime.dll\")
 if(UNIX)
   if (APPLE)
     set(ONNXRUNTIME_SO_LINK_FLAG " -Xlinker -dead_strip")
+  elseif(${CMAKE_SYSTEM_NAME} MATCHES "AIX")
+    set(ONNXRUNTIME_SO_LINK_FLAG " -Xlinker -bE:${SYMBOL_FILE}")
   else()
     set(ONNXRUNTIME_SO_LINK_FLAG " -Xlinker --version-script=${SYMBOL_FILE} -Xlinker --no-undefined -Xlinker --gc-sections -z noexecstack")
   endif()
@@ -130,6 +132,8 @@ if (NOT WIN32)
     else()
         set_target_properties(onnxruntime PROPERTIES INSTALL_RPATH "@loader_path")
     endif()
+  elseif (${CMAKE_SYSTEM_NAME} MATCHES "AIX")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-L${ORIGIN}")
   elseif (NOT onnxruntime_BUILD_WEBASSEMBLY)
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-rpath='$ORIGIN'")
   endif()
@@ -170,34 +174,64 @@ endif()
 
 # This list is a reversed topological ordering of library dependencies.
 # Earlier entries may depend on later ones. Later ones should not depend on earlier ones.
-set(onnxruntime_INTERNAL_LIBRARIES
-  onnxruntime_session
-  ${onnxruntime_libs}
-  ${PROVIDERS_ACL}
-  ${PROVIDERS_ARMNN}
-  ${PROVIDERS_COREML}
-  ${PROVIDERS_DML}
-  ${PROVIDERS_NNAPI}
-  ${PROVIDERS_QNN}
-  ${PROVIDERS_SNPE}
-  ${PROVIDERS_TVM}
-  ${PROVIDERS_RKNPU}
-  ${PROVIDERS_ROCM}
-  ${PROVIDERS_VITISAI}
-  ${PROVIDERS_XNNPACK}
-  ${PROVIDERS_AZURE}
-  ${PROVIDERS_INTERNAL_TESTING}
-  ${onnxruntime_winml}
-  onnxruntime_optimizer
-  onnxruntime_providers
-  ${onnxruntime_tvm_libs}
-  onnxruntime_framework
-  onnxruntime_graph
-  onnxruntime_util
-  ${ONNXRUNTIME_MLAS_LIBS}
-  onnxruntime_common
-  onnxruntime_flatbuffers
-)
+if (${CMAKE_SYSTEM_NAME} MATCHES "AIX")
+  set(onnxruntime_INTERNAL_LIBRARIES
+    onnxruntime_session
+    ${onnxruntime_libs}
+    ${PROVIDERS_ACL}
+    ${PROVIDERS_ARMNN}
+    ${PROVIDERS_COREML}
+    ${PROVIDERS_DML}
+    ${PROVIDERS_NNAPI}
+    ${PROVIDERS_SNPE}
+    ${PROVIDERS_NUPHAR}
+    ${PROVIDERS_TVM}
+    ${PROVIDERS_RKNPU}
+    ${PROVIDERS_ROCM}
+    ${PROVIDERS_VITISAI}
+    ${PROVIDERS_XNNPACK}
+    ${PROVIDERS_INTERNAL_TESTING}
+    ${onnxruntime_winml}
+    onnxruntime_optimizer
+    onnxruntime_providers
+    ${onnxruntime_tvm_libs}
+    onnxruntime_framework
+    onnxruntime_graph
+    onnxruntime_util
+    ${ONNXRUNTIME_MLAS_LIBS}
+    onnxruntime_common
+    onnxruntime_flatbuffers
+    iconv
+  )
+else()
+  set(onnxruntime_INTERNAL_LIBRARIES
+    onnxruntime_session
+    ${onnxruntime_libs}
+    ${PROVIDERS_ACL}
+    ${PROVIDERS_ARMNN}
+    ${PROVIDERS_COREML}
+    ${PROVIDERS_DML}
+    ${PROVIDERS_NNAPI}
+    ${PROVIDERS_SNPE}
+    ${PROVIDERS_NUPHAR}
+    ${PROVIDERS_TVM}
+    ${PROVIDERS_RKNPU}
+    ${PROVIDERS_ROCM}
+    ${PROVIDERS_VITISAI}
+    ${PROVIDERS_XNNPACK}
+    ${PROVIDERS_INTERNAL_TESTING}
+    ${onnxruntime_winml}
+    onnxruntime_optimizer
+    onnxruntime_providers
+    ${onnxruntime_tvm_libs}
+    onnxruntime_framework
+    onnxruntime_graph
+    onnxruntime_util
+    ${ONNXRUNTIME_MLAS_LIBS}
+    onnxruntime_common
+    onnxruntime_flatbuffers
+  )
+endif()
 
 if (onnxruntime_ENABLE_LANGUAGE_INTEROP_OPS)
   list(APPEND onnxruntime_INTERNAL_LIBRARIES

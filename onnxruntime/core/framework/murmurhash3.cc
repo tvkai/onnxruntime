@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #include "core/framework/murmurhash3.h"
+#include "core/framework/endian.h"
 
 // Original source: https://github.com/aappleby/smhasher/blob/master/src/MurmurHash3.cpp
 //-----------------------------------------------------------------------------

@@ -188,6 +188,100 @@ static Status ReadExternalDataForTensor(const ONNX_NAMESPACE::TensorProto& tenso
 namespace onnxruntime {
 namespace utils {
 #if !defined(ORT_MINIMAL_BUILD)
+void ConvertRawDataInTensorProto(TensorProto* tensor)
+{
+            size_t element_size=1;
+            char* bytes = NULL;
+            size_t num_elements=0;
+            switch(tensor->data_type())
+            {
+             case TensorProto_DataType_FLOAT:
+             bytes = (char*)(tensor->mutable_float_data()->mutable_data());
+             num_elements = tensor->float_data_size();
+             element_size=4;
+             break;
+
+             case TensorProto_DataType_INT32:
+             bytes = (char*)(tensor->mutable_int32_data()->mutable_data());
+             num_elements = tensor->int32_data_size();
+             element_size=4;
+             break;
+
+             case TensorProto_DataType_UINT32:
+             bytes = (char*)(tensor->mutable_int32_data()->mutable_data());
+             num_elements = tensor->int32_data_size();
+             element_size=4;
+             break;
+
+             case TensorProto_DataType_UINT8:
+             case TensorProto_DataType_INT8:
+             element_size=1;
+             break;
+
+             case TensorProto_DataType_UINT16:
+             case TensorProto_DataType_INT16:
+             case TensorProto_DataType_FLOAT16:
+             case TensorProto_DataType_BFLOAT16:
+             element_size=2;
+             break;
+
+             case TensorProto_DataType_UINT64:
+             bytes = (char*)(tensor->mutable_uint64_data()->mutable_data());
+             num_elements = tensor->uint64_data_size();
+             element_size=8;
+             break;
+
+             case TensorProto_DataType_DOUBLE:
+             bytes = (char*)(tensor->mutable_double_data()->mutable_data());
+             num_elements = tensor->double_data_size();
+             element_size=8;
+             break;
+
+             case TensorProto_DataType_INT64:
+             bytes = (char*)(tensor->mutable_int64_data()->mutable_data());
+             num_elements = tensor->int64_data_size();
+             element_size=8;
+             break;
+
+             case TensorProto_DataType_COMPLEX64:
+             element_size=8;
+             break;
+            }
+            if (tensor->has_raw_data()) {
+              num_elements = (tensor->raw_data().size()) / element_size;
+              bytes = (char*)(tensor->mutable_raw_data()->c_str());
+            }
+/*
+            uint64_t *pbt = (uint64_t*)bytes;
+            std::cout << "Madhu graph.cc ConveTens tensor->name()=" << tensor->name()
+                      << " tensor->data_type()=" << tensor->data_type()
+                      << " element_size=" << element_size
+                      << " num_elements=" << num_elements << std::hex << " pbt[0]=" << pbt[0]
+                      << " pbt[1]=" << pbt[1] << std::dec << std::endl;
+*/
+
+
+           for (size_t i = 0; i < num_elements; ++i) {
+                char* start_byte = bytes + i * element_size;
+                char* end_byte = start_byte + element_size - 1;
+                /* keep swapping */
+                for (size_t count = 0; count < element_size / 2; ++count) {
+                    char temp = *start_byte;
+                    *start_byte = *end_byte;
+                    *end_byte = temp;
+                    ++start_byte;
+                    --end_byte;
+                }
+           }
+
+/*
+          std::cout << "Madhu1 graph.cc ConveTens pbt[0]=" << std::hex << pbt[0]
+                    << " pbt[1]=" << pbt[1] << std::dec << std::endl;
+*/
+
+  return;
+}
+
 static Status UnpackTensorWithExternalDataImpl(const ONNX_NAMESPACE::TensorProto& tensor,
                                                const ORTCHAR_T* tensor_proto_dir,
                                                size_t expected_num_elements, size_t element_size,
@@ -800,9 +894,9 @@ ONNXTensorElementDataType GetTensorElementType(const ONNX_NAMESPACE::TensorProto
 
 ONNX_NAMESPACE::TensorProto TensorToTensorProto(const Tensor& tensor, const std::string& tensor_proto_name) {
   // Given we are using the raw_data field in the protobuf, this will work only for little-endian format.
-  if constexpr (endian::native != endian::little) {
-    ORT_THROW("Big endian not supported");
-  }
+  // ORT_IF_CONSTEXPR(endian::native != endian::little) {
+  //    ORT_THROW("Big endian not supported");
+  //}
 
   // Set name, dimensions, type, and data of the TensorProto.
   ONNX_NAMESPACE::TensorProto tensor_proto;
@@ -823,6 +917,10 @@ ONNX_NAMESPACE::TensorProto TensorToTensorProto(const Tensor& tensor, const std:
     }
   } else {
     tensor_proto.set_raw_data(tensor.DataRaw(), tensor.SizeInBytes());
+    if constexpr (endian::native != endian::little) {
+       utils::ConvertRawDataInTensorProto((ONNX_NAMESPACE::TensorProto*)&tensor_proto);
+    }
+
   }
 
   return tensor_proto;
@@ -1206,6 +1304,10 @@ static void SparsifyGeneric(const void* dense_raw_data, size_t n_dense_elements,
   } else {
     indices.set_data_type(ONNX_NAMESPACE::TensorProto_DataType_INT8);
     indices.set_raw_data(std::string());
+  }
+
+  if constexpr (endian::native != endian::little) {
+       utils::ConvertRawDataInTensorProto((ONNX_NAMESPACE::TensorProto*)&indices);
   }
   nnz = gathered_indices.size();
 }
