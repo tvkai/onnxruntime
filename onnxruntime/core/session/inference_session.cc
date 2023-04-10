@@ -1036,7 +1036,9 @@ Status InferenceSession::LoadOrtModel(const void* model_data, int model_data_len
   });
 }
 
-Status InferenceSession::LoadOrtModel(std::function<Status()> load_ort_format_model_bytes) {
+Status InferenceSession::LoadOrtModelWithLoader(std::function<Status()> load_ort_format_model_bytes) {
+   
+
 //  static_assert(FLATBUFFERS_LITTLEENDIAN, "ORT format only supports little-endian machines");
 
   std::lock_guard<onnxruntime::OrtMutex> l(session_mutex_);
