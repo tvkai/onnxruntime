@@ -41,7 +41,7 @@ with open(args.output, "w") as file:
     elif args.style == "xcode":
         pass  # xcode compile don't has any header.
     else:
-		pass
+        pass
         #file.write("VERS_%s {\n" % VERSION_STRING)
         #file.write(" global:\n")
 
@@ -55,7 +55,7 @@ with open(args.output, "w") as file:
         symbol_index += 1
 
     if args.style == "gcc":
-		pass
+        pass
         #file.write(" local:\n")
         #file.write("    *;\n")
         #file.write("};   \n")

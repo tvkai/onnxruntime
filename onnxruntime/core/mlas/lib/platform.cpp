@@ -492,7 +492,6 @@ Return Value:
 #endif
 #endif
 
-#endif // __linux__
 #endif // MLAS_TARGET_POWER
 
 }

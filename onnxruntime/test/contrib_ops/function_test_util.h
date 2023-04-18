@@ -128,7 +128,7 @@ struct FunctionTestCase {
     input_args.emplace_back(input_name, &arg_type);
 
     if (GenData) {
-      std::vector<T> data = random<T>(shapeforrandom);
+      std::vector<T> data = random<T>(shape);
       OrtValue ort_value;
       CreateMLValue<T>(provider->GetAllocator(0, OrtMemTypeDefault), shape, data, &ort_value);
       input_values.push_back(std::make_pair(input_name, ort_value));
