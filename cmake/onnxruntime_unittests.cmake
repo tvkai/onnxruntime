@@ -14,7 +14,7 @@ if (onnxruntime_USE_TVM)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "AIX")
-  list(APPEND TEST_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/onnx")
+  list(APPEND TEST_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../build/Linux/${CMAKE_BUILD_TYPE}/_deps/onnx-src/")
 endif()
 
 set(disabled_warnings)
@@ -1485,6 +1485,10 @@ if (NOT onnxruntime_BUILD_WEBASSEMBLY)
             ${ONNXRUNTIME_CUSTOM_OP_REGISTRATION_TEST_SRC_DIR}/test_registercustomops.cc)
 
     set(onnxruntime_customopregistration_test_LIBS custom_op_library onnxruntime_common onnxruntime_test_utils)
+    #AIX To do - similar to issue 13554 where symbols expected to be defined though not used by AIX ld
+    if(${CMAKE_SYSTEM_NAME} MATCHES "AIX")
+	    list(APPEND  onnxruntime_customopregistration_test_LIBS onnxruntime_session onnxruntime_util onnxruntime_framework onnxruntime_common onnxruntime_graph  onnxruntime_providers onnxruntime_mlas onnxruntime_optimizer onnxruntime_flatbuffers iconv re2 libprotobuf-lite onnx_proto nsync_cpp)
+    endif()
     AddTest(DYN
             TARGET onnxruntime_customopregistration_test
             SOURCES ${onnxruntime_customopregistration_test_SRC} ${onnxruntime_unittest_main_src}
