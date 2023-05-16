@@ -817,6 +817,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "AIX")
   target_link_options(onnxruntime_test_all PRIVATE "-Wl,-bkeepfile:CMakeFiles/onnxruntime_test_all.dir${TEST_SRC_DIR}/quantization/quantization_test.cc.o")
   target_link_options(onnxruntime_test_all PRIVATE "-Wl,-bkeepfile:CMakeFiles/onnxruntime_test_all.dir${TEST_SRC_DIR}/framework/tensor_test.cc.o")
   target_link_options(onnxruntime_test_all PRIVATE "-Wl,-bkeepfile:CMakeFiles/onnxruntime_test_all.dir${TEST_SRC_DIR}/framework/bfc_arena_test.cc.o")
+  target_link_options(onnxruntime_test_all PRIVATE "-Wl,-bkeepfile:CMakeFiles/onnxruntime_test_all.dir${TEST_SRC_DIR}/platform/threadpool_test.cc.o")
+  target_link_options(onnxruntime_test_all PRIVATE "-Wl,-bkeepfile:CMakeFiles/onnxruntime_test_all.dir${TEST_SRC_DIR}/common/narrow_test.cc.o")
 endif()
 
 # the default logger tests conflict with the need to have an overall default logger
